@@ -137,3 +137,47 @@ def test_token_expiration(test_client):
     response = test_client.get('/cart/1', headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 401  # Unauthorized due to expired token
     assert response.json["msg"] == "Token has expired"
+
+
+# Test invalid input 
+
+def test_invalid_payload_reg(test_client):
+    data = {
+        "username": 123,  # Invalid type
+        "password": "password123"
+    }
+
+    response = test_client.post("/register", json=data)
+    assert response.status_code == 400
+    assert response.json["message"] == "Invalid payload"
+
+def test_invalid_payload_reg2(test_client):
+    data = {
+        "username": None,  # Invalid type
+        "password": None
+    }
+
+    response = test_client.post("/register", json=data)
+    assert response.status_code == 400
+    assert response.json["message"] == "Invalid payload"
+
+
+def test_invalid_payload_login(test_client):
+    data = {
+        "username": 123,  # Invalid type
+        "password": "password123"
+    }
+
+    response = test_client.post("/login", json=data)
+    assert response.status_code == 400
+    assert response.json["message"] == "Invalid payload"
+
+def test_invalid_payload_login2(test_client):
+    data = {
+        "username": None,  # Invalid type
+        "password": None
+    }
+
+    response = test_client.post("/login", json=data)
+    assert response.status_code == 400
+    assert response.json["message"] == "Invalid payload"

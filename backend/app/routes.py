@@ -28,6 +28,10 @@ def login():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
+
+    if not isinstance(username, str) or not isinstance(password, str):
+        return jsonify({"message": "Invalid payload"}), 400
+    
     user = User.query.filter_by(username=username).first()
     
     if user is None:
@@ -45,6 +49,10 @@ def register():
     data = request.get_json()
     username = data.get("username")
     password = data.get("password")
+
+    if not isinstance(username, str) or not isinstance(password, str):
+        return jsonify({"message": "Invalid payload"}), 400
+    
     user = User.query.filter_by(username=username).first()
     
     if user is None:

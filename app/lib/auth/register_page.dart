@@ -1,4 +1,5 @@
 import 'package:app/backend/server_communicator.dart';
+import 'package:app/widget_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -45,9 +46,9 @@ class RegisterPageState extends State<RegisterPage> {
                       ),
                     ),
                     const SizedBox(height: 20),
-                    getTextField('Email', Icons.email, emailController),  
+                    getTextFieldIcon('Email', Icons.email, emailController),  
                     const SizedBox(height: 16),
-                    getTextField('Password', Icons.lock, isSensitive: true, passwordController), 
+                    getTextFieldIcon('Password', Icons.lock, isSensitive: true, passwordController), 
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: onRegister,
@@ -121,25 +122,5 @@ class RegisterPageState extends State<RegisterPage> {
         );
       } 
     }
-  }
-
-  // Reusable method to create a nice text field. 
-  Widget getTextField(String label, IconData icon, TextEditingController controller, {bool isSensitive = false}) {
-    return TextField(
-      controller: controller,
-      obscureText: isSensitive,  
-      decoration: InputDecoration(
-        hintText: label,
-        prefixIcon: Icon(icon), 
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.blue),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
-          borderSide: const BorderSide(color: Colors.blueAccent),
-        ),
-      ),
-    );
   }
 }

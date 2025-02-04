@@ -20,6 +20,7 @@ class MainScaffoldState extends State<MainScaffold> {
   Widget build(BuildContext context) {
     //TODO Fix so you cant go back
     return Scaffold(
+      backgroundColor: Colors.white,
       body: widget.child,
       bottomNavigationBar: NavigationBar(
         onDestinationSelected: (int index) {
@@ -36,7 +37,7 @@ class MainScaffoldState extends State<MainScaffold> {
         indicatorColor: Colors.amber,
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
-          NavigationDestination(icon: Icon(Icons.receipt_long_outlined), label: 'Add List'),
+          NavigationDestination(icon: Icon(Icons.add), label: 'Add List'),
           NavigationDestination(icon: Icon(Icons.people_alt), label: 'Add Friends'),
           NavigationDestination(icon: Icon(Icons.settings), label: 'Settings')
         ],

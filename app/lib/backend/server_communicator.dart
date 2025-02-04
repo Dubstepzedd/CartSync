@@ -38,12 +38,11 @@ class ServerCommunicator {
 
     final prefs = await SharedPreferences.getInstance();
     String? authToken;
+  
     if(prefs.containsKey("authToken")) {
       authToken = prefs.getString('authToken');
     }
 
-    print(authToken);
-   
     final url = Uri.parse('$baseUrl$route$params');
 
     // Set up headers
@@ -73,6 +72,38 @@ class ServerCommunicator {
           response = await http.patch(url, headers: headers, body: jsonEncode(body));
           break;
       }
+
+       if (response.statusCode == 401) {
+      // Send request to refresh the token
+      String? refreshToken = prefs.getString('refreshToken');
+
+      if (refreshToken == null) {
+        return {
+          "success": false,
+          "msg": "No refresh token found. Please log in again.",
+        };
+      }
+
+      final refreshResponse = await http.post(
+        Uri.parse('$baseUrl/refresh'), // Replace with your actual URL
+        headers: {
+          'Authorization': 'Bearer $refreshToken', // Send the refresh token in the header
+        },
+      );
+
+      if (refreshResponse.statusCode == 200) {
+        // Parse the new access token from the response
+        final newAccessToken = jsonDecode(refreshResponse.body)['access_token'];
+        setToken(newAccessToken, refreshToken);
+        return sendRequest(route, method, body); // Retry the original request
+      } 
+      else {
+        return {
+          "success": false,
+          "msg": "Failed to refresh token. Please log in again.",
+        };
+      }
+    }
 
       return jsonDecode(response.body);
     }

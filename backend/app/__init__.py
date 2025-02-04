@@ -2,6 +2,7 @@ import os
 import subprocess
 from flask import Flask
 from extensions import db, jwt,bcrypt
+from app.auth import auth_blueprint
 from app.routes import main_blueprint
 from config import config_dict
 from flask_cors import CORS
@@ -19,4 +20,5 @@ def create_app():
     
     # Register blueprints
     app.register_blueprint(main_blueprint)
+    app.register_blueprint(auth_blueprint)
     return app

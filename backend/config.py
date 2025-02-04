@@ -11,6 +11,7 @@ class BaseConfig:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     JWT_SECRET_KEY = os.environ.get("JWT_SECRET")
     JWT_ACCESS_TOKEN_EXPIRES = timedelta(hours=1)  # Default expiration time for JWTs
+    JWT_REFRESH_TOKEN_EXPIRES = timedelta(days=30)  # Default expiration time refresh JWTs
 
 # Development configuration class that inherits from BaseConfig
 class DevelopmentConfig(BaseConfig):

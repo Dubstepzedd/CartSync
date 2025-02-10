@@ -1,8 +1,19 @@
 import 'package:app/backend/server_communicator.dart';
+import 'package:app/pages/providers/cart_state.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 
-class HomePage extends StatelessWidget {
+class HomePage extends StatefulWidget {
   const HomePage({super.key});
+  
+  @override
+  State<StatefulWidget> createState() {
+    return HomePageState();
+  }
+
+ 
+}
+class HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
@@ -20,16 +31,24 @@ class HomePage extends StatelessWidget {
           var lists = [];
           
           if (snapshot.data != null) {
-              lists = snapshot.data["carts"] ?? [];
+              lists = snapshot.data["data"] ?? [];
+          }
+
+          if (lists.isEmpty) {
+            return const Text("You have no carts yet");
           }
 
           return ListView.builder(
             itemCount: lists.length,
             itemBuilder: (BuildContext context, int index) {
-              final name = lists[index]["name"];
-              final description = lists[index]["description"];
-              final count = lists[index]["count"];
-              return buildCard(name,description,count);
+              final listItem = lists[index] as Map<String, dynamic>; 
+              final name = listItem["name"] as String;
+              final description = listItem["description"] as String;
+              final id = listItem["id"] as int;
+              final usernames = List<String>.from(listItem["users"]); 
+              final items = List<Map<String, dynamic>>.from(listItem["items"]); 
+
+              return buildCard(id, name,description,items, usernames);
             },
           );
         }
@@ -37,7 +56,7 @@ class HomePage extends StatelessWidget {
     );
   }
 
-  Widget buildCard(String name, String description, int count) {
+  Widget buildCard(int id, String name, String description, List<Map<String, dynamic>> items, List<String> usernames) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white10,
@@ -56,13 +75,47 @@ class HomePage extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            name,
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              color: Colors.black87,
-            ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                name,
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.black87,
+                ),
+              ),
+              IconButton(
+                onPressed: () async {
+                  final errorMessage = await context.read<CartState>().removeUserFromCart(id);
+                  if (!mounted) return;
+                  if (errorMessage == null) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        backgroundColor: Colors.greenAccent,
+                        content: Text(
+                          'User removed successfully',
+                          style: TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    );
+                  } else {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        backgroundColor: Colors.redAccent,
+                        content: Text(
+                          errorMessage,
+                          style: const TextStyle(color: Colors.black),
+                        ),
+                      ),
+                    );
+                  }
+                },
+                icon: const Icon(Icons.cancel),
+                color: Colors.redAccent,
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           Text(
@@ -77,7 +130,7 @@ class HomePage extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
-                "$count items in the list",
+                "${items.length} items in the list",
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -86,6 +139,19 @@ class HomePage extends StatelessWidget {
               ),
             ],
           ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.start,
+            children: [
+              Text(
+                "${usernames.length} users have access",
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                  color: Colors.grey.shade700,
+                ),
+              ),
+            ],
+          )
         ],
       ),
     );

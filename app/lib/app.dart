@@ -4,12 +4,19 @@ import 'package:app/main_scaffold.dart';
 import 'package:app/pages/friends.dart';
 import 'package:app/pages/home.dart';
 import 'package:app/pages/list_page.dart';
+import 'package:app/pages/providers/cart_state.dart';
 import 'package:app/pages/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(
+    ChangeNotifierProvider(
+      create: (context) => CartState(),
+      child: const MyApp(),
+    ),
+  );
 }
 
 final GlobalKey<NavigatorState> _shellNavigatorKey = GlobalKey<NavigatorState>();

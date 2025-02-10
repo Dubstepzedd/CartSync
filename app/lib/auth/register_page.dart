@@ -19,6 +19,7 @@ class RegisterPageState extends State<RegisterPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.white,  // Soft background color
       appBar: AppBar(
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),

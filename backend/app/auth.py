@@ -6,6 +6,7 @@ from app.models import User, JwtBlocklist
 from extensions import db
 from extensions import jwt
 from flask_cors import cross_origin
+from app.codes import ResponseType
 
 # Create a blueprint for the main routes
 auth_blueprint = Blueprint('auth', __name__)
@@ -24,25 +25,25 @@ def check_if_token_is_revoked(jwt_header, jwt_payload: dict):
 def login():
     data = request.get_json()
     if data is None:
-        return jsonify({"success": False, "msg": "Invalid or missing JSON payload"}), 400
+        return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Invalid or missing JSON payload"}), 400
 
     username = data.get("username")
     password = data.get("password")
 
     if not isinstance(username, str) or not isinstance(password, str) :
-        return jsonify({"success": False, "msg": "Invalid payload"}), 400
+        return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Invalid payload"}), 400
     
     user = User.query.filter_by(username=username).first()
     
     if user is None:
-        return jsonify({"success": False, "msg": "User not found"}), 404
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found"}), 404
     
     if user.check_password(password):
         access_token = create_access_token(identity=username)
         refresh_token = create_refresh_token(identity=username)
-        return jsonify({"success":True, "msg": "Successfully logged in", "access_token": access_token, "refresh_token": refresh_token}), 200
+        return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Successfully logged in", "access_token": access_token, "refresh_token": refresh_token}), 200
     else:
-        return jsonify({"success": False, "msg": "Invalid credentials"}), 400
+        return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Invalid credentials"}), 400
 
     
 @auth_blueprint.route("/register", methods=["POST"])
@@ -51,23 +52,23 @@ def register():
     data = request.get_json()
 
     if data is None:
-        return jsonify({"success": False, "msg": "Invalid or missing JSON payload"}), 400
+        return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Invalid or missing JSON payload"}), 400
 
     username = data.get("username")
     password = data.get("password")
 
     if not isinstance(username, str) or not isinstance(password, str):
-        return jsonify({"success": False, "msg": "Invalid type in payload"}), 400
+        return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Invalid payload"}), 400
     
     user = User.query.filter_by(username=username).first()
     
-    if user is None:
-        user = User(username, password)
-        db.session.add(user)
-        db.session.commit()
-        return jsonify({"success": True,"msg":"Successfully registered user"}), 200
-    else:
-        return jsonify({"success": False, "msg": "User already exists"}), 409
+    if user is not None:
+        return jsonify({"type": ResponseType.RESOURCE_ALREADY_EXISTS.value, "msg": "User already exists"}), 409
+    
+    user = User(username, password)
+    db.session.add(user)
+    db.session.commit()
+    return jsonify({"type": ResponseType.RESOURCE_CREATED.value,"msg":"Successfully registered user"}), 201
 
 @auth_blueprint.route("/logout", methods=["DELETE"])
 @jwt_required()
@@ -81,7 +82,7 @@ def logout():
     db.session.add(revoked_token)
     db.session.commit()
     
-    return jsonify({"success": True, "msg": "Access token revoked"})
+    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Access token revoked"})
 
 @auth_blueprint.route("/refresh", methods=["POST"])
 @jwt_required(refresh=True)
@@ -89,4 +90,6 @@ def logout():
 def refresh():
     identity = get_jwt()["sub"]  # Extract the identity from the refresh token
     new_access_token = create_access_token(identity=identity)
-    return jsonify({"success": True, "msg": "Successfully refreshed access token", "access_token": new_access_token}), 200
+    db.session.add(JwtBlocklist(jti=get_jwt()["jti"]))
+    db.session.commit()
+    return jsonify({"type": ResponseType.RESOURCE_CREATED.value, "msg": "Successfully refreshed access token", "access_token": new_access_token}), 201

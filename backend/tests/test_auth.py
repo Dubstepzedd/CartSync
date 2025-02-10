@@ -34,8 +34,6 @@ def test_client():
 
 @pytest.fixture
 
-# Register
-
 def register_user(test_client):
     # Register a new user to use in other tests
     data = {
@@ -43,8 +41,8 @@ def register_user(test_client):
         "password": "password123"
     }
     response = test_client.post("/register", json=data)
-    return response
-
+    assert response.status_code == 201
+    
 def test_register_new_user(test_client):
     data = {
         "username": "user",
@@ -52,8 +50,8 @@ def test_register_new_user(test_client):
     }
 
     response = test_client.post("/register", json=data)
-    assert response.status_code == 200
-    assert 'access_token' in response.json
+    assert response.status_code == 201
+    assert response.json["type"] == "RESOURCE_CREATED"
 
 def test_register_existing_user(test_client):
     data = {
@@ -62,8 +60,9 @@ def test_register_existing_user(test_client):
     }
     
     response = test_client.post("/register", json=data)
-    assert response.status_code == 400
-    assert response.json["message"] == "User already exists"
+    assert response.status_code == 409
+    assert response.json["msg"] == "User already exists"
+    assert response.json["type"] == "RESOURCE_ALREADY_EXISTS"
 
 # Login
 
@@ -85,7 +84,7 @@ def test_login_invalid_user(test_client):
 
     response = test_client.post("/login", json=data)
     assert response.status_code == 404
-    assert response.data == b"User not found"
+    assert response.json["msg"] == "User not found"
 
 def test_login_invalid_password(test_client):
     data = {
@@ -95,7 +94,7 @@ def test_login_invalid_password(test_client):
 
     response = test_client.post("/login", json=data)
     assert response.status_code == 400
-    assert response.data == b"Invalid credentials"
+    assert response.json["msg"] == "Invalid credentials"
 
 
 # Logout test
@@ -134,7 +133,7 @@ def test_token_expiration(test_client):
     time.sleep(TestingConfig.JWT_ACCESS_TOKEN_EXPIRES.total_seconds() + 1)
 
     # Send a request with the expired token
-    response = test_client.get('/cart/1', headers={"Authorization": f"Bearer {token}"})
+    response = test_client.get('/get_carts', headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 401  # Unauthorized due to expired token
     assert response.json["msg"] == "Token has expired"
 
@@ -149,7 +148,7 @@ def test_invalid_payload_reg(test_client):
 
     response = test_client.post("/register", json=data)
     assert response.status_code == 400
-    assert response.json["message"] == "Invalid payload"
+    assert response.json["type"] ==  "WRONG_PAYLOAD"
 
 def test_invalid_payload_reg2(test_client):
     data = {
@@ -159,7 +158,7 @@ def test_invalid_payload_reg2(test_client):
 
     response = test_client.post("/register", json=data)
     assert response.status_code == 400
-    assert response.json["message"] == "Invalid payload"
+    assert response.json["type"] ==  "WRONG_PAYLOAD"
 
 
 def test_invalid_payload_login(test_client):
@@ -170,7 +169,7 @@ def test_invalid_payload_login(test_client):
 
     response = test_client.post("/login", json=data)
     assert response.status_code == 400
-    assert response.json["message"] == "Invalid payload"
+    assert response.json["type"] ==  "WRONG_PAYLOAD"
 
 def test_invalid_payload_login2(test_client):
     data = {
@@ -180,4 +179,4 @@ def test_invalid_payload_login2(test_client):
 
     response = test_client.post("/login", json=data)
     assert response.status_code == 400
-    assert response.json["message"] == "Invalid payload"
+    assert response.json["type"] ==  "WRONG_PAYLOAD"

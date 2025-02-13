@@ -15,9 +15,34 @@ class ServerCommunicator {
   ServerCommunicator._privateConstructor();
   static const String baseUrl = 'http://127.0.0.1:5000';
   static final ServerCommunicator _instance = ServerCommunicator._privateConstructor();
+  String? username;
 
   factory ServerCommunicator() {
     return _instance;
+  }
+  
+  void setUsername(String username) async {
+    if(this.username == username) {
+      return; 
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('username', username);
+    this.username = username;
+  }
+
+  Future<String?> getUsername() async {
+    if (username != null) {
+      return username;
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    if(prefs.containsKey("username")) {
+      username = prefs.getString('username');
+      return username;
+    }
+
+    return null;
   }
 
   Future<void> setToken(String authToken, String refreshToken) async {
@@ -78,7 +103,7 @@ class ServerCommunicator {
 
         if (refreshToken == null) {
           return {
-            "statucCode": null,
+            "statusCode": null,
             "msg": "No refresh token found. Please log in again.",
           };
         }
@@ -90,7 +115,7 @@ class ServerCommunicator {
           },
         );
 
-        if (refreshResponse.statusCode == 200) {
+        if (refreshResponse.statusCode == 201) {
           // Parse the new access token from the response
           final newAccessToken = jsonDecode(refreshResponse.body)['access_token'];
           setToken(newAccessToken, refreshToken);

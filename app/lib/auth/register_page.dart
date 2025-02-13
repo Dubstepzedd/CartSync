@@ -1,7 +1,8 @@
-import 'package:app/backend/server_communicator.dart';
+import 'package:app/pages/providers/cart_state.dart';
 import 'package:app/widget_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
@@ -52,7 +53,7 @@ class RegisterPageState extends State<RegisterPage> {
                     getTextFieldIcon('Password', Icons.lock, isSensitive: true, passwordController), 
                     const SizedBox(height: 20),
                     ElevatedButton(
-                      onPressed: onRegister,
+                      onPressed: () => onRegister(context),
                       style: ElevatedButton.styleFrom(
                         minimumSize: const Size(double.infinity, 50),  
                         backgroundColor: Colors.grey[300],
@@ -74,54 +75,37 @@ class RegisterPageState extends State<RegisterPage> {
     );
   } 
   
-  Future<void> onRegister() async {
+  Future<void> onRegister(BuildContext context) async {
     if (formKey.currentState!.validate()) {
-       try {
+      final email = emailController.text;
+      final password = passwordController.text;
+      context.read<CartState>().register(email, password).then((response) {
+        if (!context.mounted) {
+          return;
+        }
 
-        final response = await ServerCommunicator().sendRequest(
-          "/register",
-          HTTPMethod.post,
-          {
-            "username": emailController.text.trim(),
-            "password": passwordController.text.trim(),
-          },
-        );
-
-        // Check if the widget is still mounted before interacting with the context
-        if (!mounted) return;
-
-        // Show feedback to the user based on the response
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(
-              response["msg"] ?? "An unknown error occurred",
-              style: TextStyle(
-                fontWeight: FontWeight.bold,
-                color: Colors.grey[900],
-              ),
-            ),
-            backgroundColor: (response["success"] ?? false) ? Colors.greenAccent : Colors.redAccent,
-          ),
+            content: Text(response.message),
+            duration: const Duration(seconds: 2),
+          )
         );
 
-        // Navigate to home if login is successful
-        if (response["success"] == true) {
+        if (response.statusCode == 201) {
           GoRouter.of(context).go('/login');
         }
-      } catch (e) {
-        // Handle errors gracefully and provide feedback
-        if (!mounted) return;
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              "Failed to login. Please try again.",
-              style: TextStyle(fontWeight: FontWeight.bold, color: Colors.grey[900]),
-            ),
-            backgroundColor: Colors.redAccent,
+      });
+    }
+    else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text(
+            "Please enter a valid email and password",
+            style: TextStyle(color: Colors.black),
           ),
-        );
-      } 
+        ),
+      );
     }
   }
 }

@@ -1,4 +1,4 @@
-import 'package:app/backend/server_communicator.dart';
+import 'package:app/models/cart.dart';
 import 'package:app/pages/providers/cart_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -10,53 +10,32 @@ class HomePage extends StatefulWidget {
   State<StatefulWidget> createState() {
     return HomePageState();
   }
-
- 
 }
+
 class HomePageState extends State<HomePage> {
 
+  @override 
+  void initState() {
+    super.initState();
+    context.read<CartState>().fetchCarts();
+  }
   @override
   Widget build(BuildContext context) {
-    return  Center(
-      child: FutureBuilder(
-        future: ServerCommunicator().sendRequest("/get_carts", HTTPMethod.get, {}),
-        builder: (BuildContext context, AsyncSnapshot snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const CircularProgressIndicator();
-          } 
-          else if (snapshot.hasError) {
-            return Text('Error: ${snapshot.error}');
+
+    final carts = context.select((CartState s) => s.carts);
+    return Center(
+      child:
+        ListView.builder(
+          itemCount: carts.length,
+          itemBuilder: (BuildContext context, int index) {
+            Cart cart = carts[index];
+            return buildCard(context, cart);
           }
-
-          var lists = [];
-          
-          if (snapshot.data != null) {
-              lists = snapshot.data["data"] ?? [];
-          }
-
-          if (lists.isEmpty) {
-            return const Text("You have no carts yet");
-          }
-
-          return ListView.builder(
-            itemCount: lists.length,
-            itemBuilder: (BuildContext context, int index) {
-              final listItem = lists[index] as Map<String, dynamic>; 
-              final name = listItem["name"] as String;
-              final description = listItem["description"] as String;
-              final id = listItem["id"] as int;
-              final usernames = List<String>.from(listItem["users"]); 
-              final items = List<Map<String, dynamic>>.from(listItem["items"]); 
-
-              return buildCard(id, name,description,items, usernames);
-            },
-          );
-        }
-      )
+        )
     );
   }
 
-  Widget buildCard(int id, String name, String description, List<Map<String, dynamic>> items, List<String> usernames) {
+  Widget buildCard(BuildContext context, Cart cart) { 
     return Container(
       decoration: BoxDecoration(
         color: Colors.white10,
@@ -79,7 +58,7 @@ class HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                name,
+                cart.name,
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
@@ -88,29 +67,31 @@ class HomePageState extends State<HomePage> {
               ),
               IconButton(
                 onPressed: () async {
-                  final errorMessage = await context.read<CartState>().removeUserFromCart(id);
-                  if (!mounted) return;
-                  if (errorMessage == null) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        backgroundColor: Colors.greenAccent,
-                        content: Text(
-                          'User removed successfully',
-                          style: TextStyle(color: Colors.black),
+                  context.read<CartState>().removeUserFromCart(cart.id).then((response) {
+                    if (!context.mounted) return;
+                    if (response.statusCode == 200) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.greenAccent,
+                          content: Text(
+                            response.message,
+                            style: const TextStyle(color: Colors.black),
+                          ),
                         ),
-                      ),
-                    );
-                  } else {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: Colors.redAccent,
-                        content: Text(
-                          errorMessage,
-                          style: const TextStyle(color: Colors.black),
+                      );
+                    } 
+                    else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.redAccent,
+                          content: Text(
+                            response.message,
+                            style: const TextStyle(color: Colors.black),
+                          ),
                         ),
-                      ),
-                    );
-                  }
+                      );
+                    }
+                  });
                 },
                 icon: const Icon(Icons.cancel),
                 color: Colors.redAccent,
@@ -119,7 +100,7 @@ class HomePageState extends State<HomePage> {
           ),
           const SizedBox(height: 8),
           Text(
-            description,
+            cart.description,
             style: TextStyle(
               fontSize: 16,
               color: Colors.grey.shade600,
@@ -130,7 +111,7 @@ class HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
-                "${items.length} items in the list",
+                "${cart.items.length} items in the list",
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
@@ -143,14 +124,14 @@ class HomePageState extends State<HomePage> {
             mainAxisAlignment: MainAxisAlignment.start,
             children: [
               Text(
-                "${usernames.length} users have access",
+                "${cart.usernames.length} users have access",
                 style: TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.w500,
                   color: Colors.grey.shade700,
                 ),
               ),
-            ],
+            ]
           )
         ],
       ),

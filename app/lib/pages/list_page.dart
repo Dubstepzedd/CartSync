@@ -12,7 +12,6 @@ class ListPage extends StatefulWidget {
   }
 }
 
-
 class ListState extends State<ListPage> {
   final nameController = TextEditingController();
   final descriptionController = TextEditingController();
@@ -48,27 +47,33 @@ class ListState extends State<ListPage> {
                   return;
                 }
 
-                context.read<CartState>().createCart(name, description).then((errorMessage) {
-                  if (context.mounted && errorMessage == null) {
+                context.read<CartState>().createCart(name, description).then((response) {
+                  
+                  if(!context.mounted) {
+                    return;
+                  }
+
+                  if (response.statusCode == 201) {
                     nameController.clear();
                     descriptionController.clear();
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
+                      SnackBar(
                         backgroundColor: Colors.greenAccent,
                         content: Text(
-                          style: TextStyle(color: Colors.black),
-                          "Cart created successfully"
+                          style: const TextStyle(color: Colors.black),
+                          response.message
                         )
                       )
                     );
                   } 
-                  else if (context.mounted) {
+                  else {
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
                         backgroundColor: Colors.redAccent,
                         content: Text(
                           style: const TextStyle(color: Colors.black),
-                          errorMessage!)
+                          response.message
+                        )
                       )
                     );
                   }
@@ -82,15 +87,7 @@ class ListState extends State<ListPage> {
                 ),
               ),
               child: Text('Create cart', style: TextStyle(fontSize: 18, color: Colors.grey[800])),
-            ),
-            Consumer<CartState>(
-              builder: (context, state, child) {
-                if (state.isLoading) {
-                  return const CircularProgressIndicator();
-                }
-                return Container();
-              },
-            ),
+            )
           ],
         ),
       ),

@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, Float, DateTime, ForeignKey, Table
+from sqlalchemy import String, Integer, DateTime, ForeignKey, Table
 from extensions import db, bcrypt
 
 # The models below use the updated syntax in SQLAlchemy 2.0. 
@@ -12,11 +12,27 @@ users_to_carts = Table(
     db.Column("id", db.String(50), db.ForeignKey("carts.id"), primary_key=True)
 )
 
+users_to_users = Table(
+    "friends",
+    db.Model.metadata,
+    db.Column("user_id", db.String(50), db.ForeignKey("users.username"), primary_key=True),
+    db.Column("friend_id", db.String(50), db.ForeignKey("users.username"), primary_key=True)
+)
+
 class User(db.Model):
     __tablename__ = "users"
     
     username: Mapped[str] = mapped_column(String(50), primary_key=True, nullable=False)
     password: Mapped[str] = mapped_column(String(60), nullable=False)
+    friends: Mapped[list["User"]] = relationship(
+        "User",
+        secondary=users_to_users,
+        primaryjoin=username == users_to_users.c.user_id,
+        secondaryjoin=username == users_to_users.c.friend_id,
+        backref="friend_of",
+        lazy=True
+    )
+
     carts: Mapped[list["Cart"]] = relationship("Cart", secondary=users_to_carts, back_populates="users", lazy=True)
 
     def __init__(self, username: str, password: str):
@@ -30,7 +46,7 @@ class User(db.Model):
         return f"User {self.username}"
     
     def to_map(self) -> dict:
-        return {"username": self.username, "carts": [cart.id for cart in self.carts]}
+        return {"username": self.username, "carts": [cart.id for cart in self.carts], "friends": [friend.username for friend in self.friends]}
 
 class Cart(db.Model):
     __tablename__ = "carts"
@@ -56,22 +72,19 @@ class CartItem(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
-    price: Mapped[float] = mapped_column(Float, nullable=False)
-    cart_name: Mapped[str] = mapped_column(String(50), ForeignKey("carts.name"), nullable=False)
-    
+    cart_id: Mapped[int] = mapped_column(Integer, ForeignKey("carts.id"), nullable=False)
     cart: Mapped["Cart"] = relationship("Cart", back_populates="items", lazy=True)
 
-    def __init__(self, name: str, description: str, price: float, cart_name: str):
+    def __init__(self, name: str, description: str, cart: str):
         self.name = name
         self.description = description
-        self.price = price
-        self.cart_name = cart_name
+        self.cart = cart
 
     def __repr__(self) -> str:
-        return f"Item {self.id}: {self.name}, ${self.price} (Cart: {self.cart_name})"
+        return f"Item {self.id}: {self.name}, (Cart: {self.cart.name})"
     
     def to_map(self) -> dict:
-        return {"name": self.name, "description": self.description, "price": self.price}
+        return {"name": self.name, "description": self.description, "cart": self.cart.name}
 
 class JwtBlocklist(db.Model):
     __tablename__ = "jwt_blocklist"

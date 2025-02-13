@@ -90,6 +90,4 @@ def logout():
 def refresh():
     identity = get_jwt()["sub"]  # Extract the identity from the refresh token
     new_access_token = create_access_token(identity=identity)
-    db.session.add(JwtBlocklist(jti=get_jwt()["jti"]))
-    db.session.commit()
     return jsonify({"type": ResponseType.RESOURCE_CREATED.value, "msg": "Successfully refreshed access token", "access_token": new_access_token}), 201

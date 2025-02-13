@@ -14,7 +14,18 @@ class FollowPage extends StatefulWidget {
   }
 }
 class UserState extends State<FollowPage> {
-  final emailController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (context.read<CartState>().users.isEmpty) {
+        return;
+      }
+
+      context.read<CartState>().clearUsers();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +36,7 @@ class UserState extends State<FollowPage> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            TextField(
+            TextFormField(
               onChanged: (value) {
                 context.read<CartState>().searchUsers(value);
               },
@@ -64,7 +75,6 @@ class UserState extends State<FollowPage> {
                         ]
                       );
                     }
-
                     return  Consumer<CartState>(
                       builder: (context, cartState, child) {
                         final users = cartState.users;
@@ -126,10 +136,10 @@ class UserTile extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(user.isFollowing(username) ? Icons.remove : Icons.add),
+            icon: Icon(user.isFollowed ? Icons.remove : Icons.add),
             onPressed: () async {
               final cartState = context.read<CartState>();
-              final response = user.isFollowing(username)
+              final response = user.isFollowed
                   ? await cartState.unfollowUser(user.email)
                   : await cartState.followUser(user.email);
 

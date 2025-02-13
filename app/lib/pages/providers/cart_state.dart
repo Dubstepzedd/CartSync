@@ -17,6 +17,11 @@ class CartState extends ChangeNotifier {
 
   List<Cart> get carts => _carts;
 
+  void clearUsers() {
+    _users = [];
+    notifyListeners();
+  }
+  
   // Fetch carts from the server
   Future<Response> fetchCarts() async {
     try {
@@ -157,10 +162,9 @@ class CartState extends ChangeNotifier {
           .sendRequest("/follow_user", HTTPMethod.post, {"username": email});
 
       if (response["statusCode"] == 201) {
-        final username = ServerCommunicator().username;
         _users = _users.map((user) {
           if (user.email == email) {
-            user.following.add(username!);
+            user.isFollowed = true;
           }
           return user;
         }).toList();
@@ -180,10 +184,9 @@ class CartState extends ChangeNotifier {
           .sendRequest("/unfollow_user", HTTPMethod.delete, {"username": email});
 
       if (response["statusCode"] == 200) {
-         final username = ServerCommunicator().username;
         _users = _users.map((user) {
           if (user.email == email) {
-            user.following.remove(username!);
+            user.isFollowed = false;
           }
           return user;
         }).toList();

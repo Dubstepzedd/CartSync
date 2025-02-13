@@ -89,7 +89,8 @@ def search_user():
     if users is None:
         return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found"}), 404
 
-    return jsonify({"type": ResponseType.RESOURCE_FOUND.value, "msg": "User found", "data": [user.to_map() for user in users]}), 200
+    data = [(user.to_map() | {"is_followed": user in current_user.following}) for user in users]
+    return jsonify({"type": ResponseType.RESOURCE_FOUND.value, "msg": "User found", "data": data}), 200
 
 
 @main_blueprint.route('/follow_user', methods=['POST'])

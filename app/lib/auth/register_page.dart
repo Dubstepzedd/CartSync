@@ -23,6 +23,14 @@ class RegisterPageState extends State<RegisterPage> {
     return Scaffold(
       backgroundColor: Colors.white,  // Soft background color
       appBar: AppBar(
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4.0),
+          child: Container(
+              color: Colors.grey[300],
+              height: 2.0,
+          )
+        ),
+        backgroundColor: Colors.white,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => GoRouter.of(context).replace('/login'),

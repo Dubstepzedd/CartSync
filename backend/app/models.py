@@ -16,7 +16,7 @@ users_to_users = Table(
     "following",
     db.Model.metadata,
     db.Column("user_id", db.String(50), db.ForeignKey("users.username"), primary_key=True),
-    db.Column("friend_id", db.String(50), db.ForeignKey("users.username"), primary_key=True)
+    db.Column("follow_id", db.String(50), db.ForeignKey("users.username"), primary_key=True)
 )
 
 class User(db.Model):
@@ -28,7 +28,7 @@ class User(db.Model):
         "User",
         secondary=users_to_users,
         primaryjoin=username == users_to_users.c.user_id,
-        secondaryjoin=username == users_to_users.c.friend_id,
+        secondaryjoin=username == users_to_users.c.follow_id,
         backref="friend_of",
         lazy=True
     )

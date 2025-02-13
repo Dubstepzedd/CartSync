@@ -13,7 +13,8 @@ enum HTTPMethod {
 // Singleton class for communicating with the server
 class ServerCommunicator {
   ServerCommunicator._privateConstructor();
-  static const String baseUrl = 'http://127.0.0.1:5000';
+  //static const String baseUrl = "http://127.0.0.1:5000"; //10.0.2.2:5000 for android emulator
+  static const String baseUrl = "http://10.0.2.2:5000"; //for android emulator
   static final ServerCommunicator _instance = ServerCommunicator._privateConstructor();
   String? username;
 

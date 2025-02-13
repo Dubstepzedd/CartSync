@@ -92,43 +92,41 @@ def search_user():
     return jsonify({"type": ResponseType.RESOURCE_FOUND.value, "msg": "User found", "data": [user.to_map() for user in users]}), 200
 
 
-@main_blueprint.route('/add_friend', methods=['POST'])
+@main_blueprint.route('/follow_user', methods=['POST'])
 @jwt_required()
 @cross_origin()
-def add_friend():
+def follow_user():
     data = request.get_json()
-    friend_username = data["username"]
-    friend = User.query.filter_by(username=friend_username).first()
+    username = data["username"]
+    user = User.query.filter_by(username=username).first()
     current_user = User.query.filter_by(username=get_jwt_identity()).first()
 
-    if friend is None:
-        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "Friend not found"}), 404
+    if user is None:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found"}), 404
     
-    if friend in current_user.friends or current_user in friend.friends:
-        return jsonify({"type": ResponseType.RESOURCE_ALREADY_EXISTS.value, "msg": "Friend already added"}), 409
+    if user in current_user.following:
+        return jsonify({"type": ResponseType.RESOURCE_ALREADY_EXISTS.value, "msg": "Already following this user"}), 409
     
-    current_user.friends.append(friend)
-    friend.friends.append(current_user)
+    current_user.following.append(user)
     db.session.commit()
 
-    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Friend added successfully"}), 201
+    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Successfully followed user"}), 201
 
 
-@main_blueprint.route('/remove_friend/<string:username>', methods=['DELETE'])
+@main_blueprint.route('/unfollow_user/<string:username>', methods=['DELETE'])
 @jwt_required()
 @cross_origin()
-def remove_friend(username: str):
-    friend = User.query.filter_by(username=username).first()
+def unfollow_user(username: str):
+    user = User.query.filter_by(username=username).first()
     current_user = User.query.filter_by(username=get_jwt_identity()).first()
 
-    if friend is None:
-        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "Friend not found"}), 404
+    if user is None:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found"}), 404
     
-    if friend not in current_user.friends or current_user not in friend.friends:
-        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "Friend not found"}), 404
+    if user not in current_user.following:
+        return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Not following the user."}), 400
     
-    current_user.friends.remove(friend)
-    friend.friends.remove(current_user)
+    current_user.following.remove(user)
     db.session.commit()
 
-    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Friend removed successfully"}), 200
+    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Successfully unfollowed user"}), 200

@@ -1,18 +1,19 @@
 import 'package:app/backend/server_communicator.dart';
+import 'package:app/helper.dart';
 import 'package:app/models/user.dart';
 import 'package:app/pages/providers/cart_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-class FriendsPage extends StatefulWidget {
-  const FriendsPage({super.key});
+class FollowPage extends StatefulWidget {
+  const FollowPage({super.key});
   
   @override
   State<StatefulWidget> createState() {
-    return FriendState();
+    return UserState();
   }
 }
-class FriendState extends State<FriendsPage> {
+class UserState extends State<FollowPage> {
   final emailController = TextEditingController();
 
   @override
@@ -29,7 +30,7 @@ class FriendState extends State<FriendsPage> {
                 context.read<CartState>().searchUsers(value);
               },
               decoration: InputDecoration(
-                hintText: "Search for friends",
+                hintText: "Search for users",
                 prefixIcon: const Icon(Icons.search),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
@@ -51,7 +52,19 @@ class FriendState extends State<FriendsPage> {
                     return const CircularProgressIndicator();
                   }
                   else {
-                    final username = snapshot.data!;
+                    final username = snapshot.data;
+
+                    if(username == null) {
+                      return const Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Icon(Icons.error, color: Colors.redAccent, size: 50,),
+                          Text("A fatal error occurred, please log out and log back in."),
+                        ]
+                      );
+                    }
+
                     return  Consumer<CartState>(
                       builder: (context, cartState, child) {
                         final users = cartState.users;
@@ -59,8 +72,8 @@ class FriendState extends State<FriendsPage> {
                           shrinkWrap: true,
                           itemCount: users.length,
                           itemBuilder: (BuildContext context, int index) {
-                            final friend = users[index];
-                            return FriendTile(friend: friend, username: username);
+                            final user = users[index];
+                            return UserTile(user: user, username: username);
                           },
                         );
                       },
@@ -77,11 +90,11 @@ class FriendState extends State<FriendsPage> {
 }
 
 
-class FriendTile extends StatelessWidget {
-  final User friend;
+class UserTile extends StatelessWidget {
+  final User user;
   final String username;
 
-  const FriendTile({super.key, required this.friend, required this.username});
+  const UserTile({super.key, required this.user, required this.username});
 
   @override
   Widget build(BuildContext context) {
@@ -105,7 +118,7 @@ class FriendTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            friend.email,
+            user.email,
             style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.bold,
@@ -113,27 +126,16 @@ class FriendTile extends StatelessWidget {
             ),
           ),
           IconButton(
-            icon: Icon(friend.isFriend(username) ? Icons.remove : Icons.add),
+            icon: Icon(user.isFollowing(username) ? Icons.remove : Icons.add),
             onPressed: () async {
               final cartState = context.read<CartState>();
-              final response = friend.isFriend(username)
-                  ? await cartState.removeFriend(friend.email)
-                  : await cartState.addFriend(friend.email);
+              final response = user.isFollowing(username)
+                  ? await cartState.unfollowUser(user.email)
+                  : await cartState.followUser(user.email);
 
               if (!context.mounted) return;
 
-              ScaffoldMessenger.of(context).clearSnackBars();
-              ScaffoldMessenger.of(context).showSnackBar(
-                SnackBar(
-                  backgroundColor: response.statusCode == 200 || response.statusCode == 201
-                      ? Colors.greenAccent
-                      : Colors.redAccent,
-                  content: Text(
-                    response.message,
-                    style: const TextStyle(color: Colors.black),
-                  ),
-                ),
-              );
+              displayMessage(context, response.statusCode == 201 || response.statusCode == 200, response.message);
             },
         ) 
         ],

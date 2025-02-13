@@ -99,7 +99,7 @@ class CartState extends ChangeNotifier {
       );
 
       if (response["statusCode"] == 200) {
-        ServerCommunicator().username = email;
+        ServerCommunicator().setUsername(email);
         ServerCommunicator().setToken(response["access_token"], response["refresh_token"]);
         return Response(statusCode: 200, message: "Successfully logged in");
       } else {
@@ -107,6 +107,23 @@ class CartState extends ChangeNotifier {
       }
     } catch (e) {
       return Response(statusCode: null, message: "Error occurred when logging in");
+    }
+  }
+
+  Future<Response> logout() async {
+    try {
+      final response = await ServerCommunicator().sendRequest("/logout", HTTPMethod.delete, {});
+
+      if(response["statusCode"] == 200) {
+        ServerCommunicator().clearStorage();
+        return Response(statusCode: 200, message: "Successfully logged out");
+      }
+      else {
+        return Response(statusCode: response["statusCode"], message: "Failed to log out");
+      }
+    } 
+    catch (e) {
+      return Future.value(Response(statusCode: null, message: "Error occurred when logging out"));
     }
   }
 
@@ -134,48 +151,47 @@ class CartState extends ChangeNotifier {
     }
   }
 
-  // Add a friend
-  Future<Response> addFriend(String email) async {
+  Future<Response> followUser(String email) async {
     try {
       final response = await ServerCommunicator()
-          .sendRequest("/add_friend", HTTPMethod.post, {"username": email});
+          .sendRequest("/follow_user", HTTPMethod.post, {"username": email});
 
       if (response["statusCode"] == 201) {
         final username = ServerCommunicator().username;
         _users = _users.map((user) {
           if (user.email == email) {
-            user.friends.add(username!);
+            user.following.add(username!);
           }
           return user;
         }).toList();
         notifyListeners();
-        return Response(statusCode: 201, message: "Successfully added friend");
+        return Response(statusCode: 201, message: "Successfully followed $email");
       } else {
-        return Response(statusCode: response["statusCode"], message: "Failed to add friend");
+        return Response(statusCode: response["statusCode"], message: "Failed to follow user");
       }
     } catch (e) {
       return Response(statusCode: null, message: "Error occurred when adding friend");
     }
   }
 
-  // Remove a friend
-  Future<Response> removeFriend(String email) async {
+  Future<Response> unfollowUser(String email) async {
     try {
       final response = await ServerCommunicator()
-          .sendRequest("/remove_friend", HTTPMethod.delete, {"username": email});
+          .sendRequest("/unfollow_user", HTTPMethod.delete, {"username": email});
 
       if (response["statusCode"] == 200) {
          final username = ServerCommunicator().username;
         _users = _users.map((user) {
           if (user.email == email) {
-            user.friends.remove(username!);
+            user.following.remove(username!);
           }
           return user;
         }).toList();
         notifyListeners();
-        return Response(statusCode: 200, message: "Successfully removed friend");
-      } else {
-        return Response(statusCode: response["statusCode"], message: "Failed to remove friend");
+        return Response(statusCode: 200, message: "Successfully unfollowed $email");
+      } 
+      else {
+        return Response(statusCode: response["statusCode"], message: "Failed to unfollow user");
       }
     } catch (e) {
       return Response(statusCode: null, message: "Error occurred when removing friend");

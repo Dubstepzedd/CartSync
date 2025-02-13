@@ -1,11 +1,10 @@
 import 'package:app/auth/login_page.dart';
 import 'package:app/auth/register_page.dart';
 import 'package:app/main_scaffold.dart';
-import 'package:app/pages/friends.dart';
+import 'package:app/pages/follow.dart';
 import 'package:app/pages/home.dart';
 import 'package:app/pages/list_page.dart';
 import 'package:app/pages/providers/cart_state.dart';
-import 'package:app/pages/settings.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -47,12 +46,8 @@ final GoRouter _router = GoRouter(
           pageBuilder: (context, state) => const NoTransitionPage(child: ListPage()),
         ),
         GoRoute(
-          path: '/friends',
-          pageBuilder: (context, state) => const NoTransitionPage(child: FriendsPage()),
-        ),
-        GoRoute(
-          path: '/settings',
-          pageBuilder: (context, state) => const NoTransitionPage(child: SettingsPage()),
+          path: '/follow',
+          pageBuilder: (context, state) => const NoTransitionPage(child: FollowPage()),
         )
       ],
     ),

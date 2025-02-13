@@ -1,3 +1,4 @@
+import 'package:app/helper.dart';
 import 'package:app/pages/providers/cart_state.dart';
 import 'package:app/widget_helper.dart';
 import 'package:flutter/material.dart';
@@ -84,12 +85,7 @@ class RegisterPageState extends State<RegisterPage> {
           return;
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            duration: const Duration(seconds: 2),
-          )
-        );
+        displayMessage(context, response.statusCode == 201, response.message);
 
         if (response.statusCode == 201) {
           GoRouter.of(context).go('/login');
@@ -97,15 +93,7 @@ class RegisterPageState extends State<RegisterPage> {
       });
     }
     else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          backgroundColor: Colors.redAccent,
-          content: Text(
-            "Please enter a valid email and password",
-            style: TextStyle(color: Colors.black),
-          ),
-        ),
-      );
+      displayMessage(context, false, "Please fill in all fields");
     }
   }
 }

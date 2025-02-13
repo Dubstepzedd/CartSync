@@ -82,7 +82,7 @@ def logout():
     db.session.add(revoked_token)
     db.session.commit()
     
-    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Access token revoked"})
+    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Access token revoked"}), 200
 
 @auth_blueprint.route("/refresh", methods=["POST"])
 @jwt_required(refresh=True)

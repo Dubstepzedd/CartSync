@@ -13,7 +13,7 @@ users_to_carts = Table(
 )
 
 users_to_users = Table(
-    "friends",
+    "following",
     db.Model.metadata,
     db.Column("user_id", db.String(50), db.ForeignKey("users.username"), primary_key=True),
     db.Column("friend_id", db.String(50), db.ForeignKey("users.username"), primary_key=True)
@@ -24,7 +24,7 @@ class User(db.Model):
     
     username: Mapped[str] = mapped_column(String(50), primary_key=True, nullable=False)
     password: Mapped[str] = mapped_column(String(60), nullable=False)
-    friends: Mapped[list["User"]] = relationship(
+    following: Mapped[list["User"]] = relationship(
         "User",
         secondary=users_to_users,
         primaryjoin=username == users_to_users.c.user_id,
@@ -46,7 +46,7 @@ class User(db.Model):
         return f"User {self.username}"
     
     def to_map(self) -> dict:
-        return {"username": self.username, "carts": [cart.id for cart in self.carts], "friends": [friend.username for friend in self.friends]}
+        return {"username": self.username, "carts": [cart.id for cart in self.carts], "following": [friend.username for friend in self.following]}
 
 class Cart(db.Model):
     __tablename__ = "carts"

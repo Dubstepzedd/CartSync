@@ -1,3 +1,4 @@
+import 'package:app/helper.dart';
 import 'package:app/models/cart.dart';
 import 'package:app/pages/providers/cart_state.dart';
 import 'package:flutter/material.dart';
@@ -69,28 +70,9 @@ class HomePageState extends State<HomePage> {
                 onPressed: () async {
                   context.read<CartState>().removeUserFromCart(cart.id).then((response) {
                     if (!context.mounted) return;
-                    if (response.statusCode == 200) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: Colors.greenAccent,
-                          content: Text(
-                            response.message,
-                            style: const TextStyle(color: Colors.black),
-                          ),
-                        ),
-                      );
-                    } 
-                    else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          backgroundColor: Colors.redAccent,
-                          content: Text(
-                            response.message,
-                            style: const TextStyle(color: Colors.black),
-                          ),
-                        ),
-                      );
-                    }
+
+                    displayMessage(context, response.statusCode == 200, response.message);
+
                   });
                 },
                 icon: const Icon(Icons.cancel),

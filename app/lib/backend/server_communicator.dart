@@ -22,10 +22,6 @@ class ServerCommunicator {
   }
   
   void setUsername(String username) async {
-    if(this.username == username) {
-      return; 
-    }
-
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('username', username);
     this.username = username;
@@ -49,6 +45,11 @@ class ServerCommunicator {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('authToken', authToken);
     await prefs.setString('refreshToken', refreshToken);
+  }
+
+  Future<void> clearStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.clear();
   }
 
   Future<Map<String, dynamic>> sendRequest(

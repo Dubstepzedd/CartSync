@@ -1,10 +1,13 @@
 
+import 'package:app/helper.dart';
+import 'package:app/pages/providers/cart_state.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class MainScaffold extends StatefulWidget {
   final Widget child;
-  final List<String> tabs = const ["home", "list_page", "friends", "settings"];
+  final List<String> tabs = const ["home", "list_page", "follow"];
   
   const MainScaffold({super.key, required this.child});
 
@@ -20,6 +23,35 @@ class MainScaffoldState extends State<MainScaffold> {
   Widget build(BuildContext context) {
     //TODO Fix so you cant go back
     return Scaffold(
+      appBar: AppBar(
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(4.0),
+          child: Container(
+              color: Colors.grey[300],
+              height: 2.0,
+          )
+        ),
+        backgroundColor: Colors.white,
+        actions: <Widget>[
+          IconButton(
+            icon: const Icon(
+              Icons.exit_to_app_outlined,
+              color: Colors.black,
+            ),
+            onPressed: () {
+              context.read<CartState>().logout().then((response) {
+                if (!context.mounted) return;
+
+                displayMessage(context, response.statusCode == 200, response.message);
+
+                if(response.statusCode == 200) {
+                  context.replace('/login');
+                }
+              });
+            },
+          )
+        ],
+      ),
       backgroundColor: Colors.white,
       body: widget.child,
       bottomNavigationBar: NavigationBar(
@@ -38,8 +70,7 @@ class MainScaffoldState extends State<MainScaffold> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.add), label: 'Add List'),
-          NavigationDestination(icon: Icon(Icons.people_alt), label: 'Add Friends'),
-          NavigationDestination(icon: Icon(Icons.settings), label: 'Settings')
+          NavigationDestination(icon: Icon(Icons.people_alt), label: 'Find users'),
         ],
       ),
     );

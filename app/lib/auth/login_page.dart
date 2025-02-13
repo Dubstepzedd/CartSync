@@ -1,3 +1,4 @@
+import 'package:app/helper.dart';
 import 'package:app/pages/providers/cart_state.dart';
 import 'package:app/widget_helper.dart';
 import 'package:flutter/material.dart';
@@ -92,12 +93,7 @@ class LoginPageState extends State<LoginPage> {
           return;
         }
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(response.message),
-            duration: const Duration(seconds: 2),
-          )
-        );
+        displayMessage(context, response.statusCode == 200, response.message);
 
         if (response.statusCode == 200) {
           GoRouter.of(context).go('/home');

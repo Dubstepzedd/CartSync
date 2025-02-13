@@ -1,5 +1,5 @@
 import 'package:app/helper.dart';
-import 'package:app/pages/providers/cart_state.dart';
+import 'package:app/pages/providers/app_state.dart';
 import 'package:app/widget_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -88,7 +88,7 @@ class LoginPageState extends State<LoginPage> {
     // Validate form before proceeding
     if (formKey.currentState!.validate()) {
 
-      context.read<CartState>().login(emailController.text, passwordController.text).then((response) {
+      context.read<AppState>().login(emailController.text, passwordController.text).then((response) {
         if (!context.mounted) {
           return;
         }

@@ -1,7 +1,7 @@
 import 'package:app/backend/server_communicator.dart';
 import 'package:app/helper.dart';
 import 'package:app/models/user.dart';
-import 'package:app/pages/providers/cart_state.dart';
+import 'package:app/pages/providers/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -19,11 +19,11 @@ class UserState extends State<FollowPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (context.read<CartState>().users.isEmpty) {
+      if (context.read<AppState>().users.isEmpty) {
         return;
       }
 
-      context.read<CartState>().clearUsers();
+      context.read<AppState>().clearUsers();
     });
   }
 
@@ -38,7 +38,7 @@ class UserState extends State<FollowPage> {
           children: [
             TextFormField(
               onChanged: (value) {
-                context.read<CartState>().searchUsers(value);
+                context.read<AppState>().searchUsers(value);
               },
               decoration: InputDecoration(
                 hintText: "Search for users",
@@ -75,7 +75,7 @@ class UserState extends State<FollowPage> {
                         ]
                       );
                     }
-                    return  Consumer<CartState>(
+                    return  Consumer<AppState>(
                       builder: (context, cartState, child) {
                         final users = cartState.users;
                         return ListView.builder(
@@ -138,7 +138,7 @@ class UserTile extends StatelessWidget {
           IconButton(
             icon: Icon(user.isFollowed ? Icons.remove : Icons.add),
             onPressed: () async {
-              final cartState = context.read<CartState>();
+              final cartState = context.read<AppState>();
               final response = user.isFollowed
                   ? await cartState.unfollowUser(user.email)
                   : await cartState.followUser(user.email);

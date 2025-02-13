@@ -1,6 +1,6 @@
 
 import 'package:app/helper.dart';
-import 'package:app/pages/providers/cart_state.dart';
+import 'package:app/pages/providers/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
@@ -21,7 +21,6 @@ class MainScaffoldState extends State<MainScaffold> {
 
   @override
   Widget build(BuildContext context) {
-    //TODO Fix so you cant go back
     return Scaffold(
       appBar: AppBar(
         bottom: PreferredSize(
@@ -39,7 +38,7 @@ class MainScaffoldState extends State<MainScaffold> {
               color: Colors.black,
             ),
             onPressed: () {
-              context.read<CartState>().logout().then((response) {
+              context.read<AppState>().logout().then((response) {
                 if (!context.mounted) return;
 
                 displayMessage(context, response.statusCode == 200, response.message);

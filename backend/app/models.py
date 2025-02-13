@@ -1,6 +1,6 @@
 from datetime import datetime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, Integer, DateTime, ForeignKey, Table
+from sqlalchemy import Boolean, String, Integer, DateTime, ForeignKey, Table
 from extensions import db, bcrypt
 
 # The models below use the updated syntax in SQLAlchemy 2.0. 
@@ -72,19 +72,21 @@ class CartItem(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
+    is_checked: Mapped[bool] = mapped_column(Boolean, default=False)
     cart_id: Mapped[int] = mapped_column(Integer, ForeignKey("carts.id"), nullable=False)
     cart: Mapped["Cart"] = relationship("Cart", back_populates="items", lazy=True)
 
-    def __init__(self, name: str, description: str, cart: str):
+    def __init__(self, name: str, description: str, cart: str, is_checked: bool = False):
         self.name = name
         self.description = description
         self.cart = cart
+        self.is_checked = is_checked
 
     def __repr__(self) -> str:
         return f"Item {self.id}: {self.name}, (Cart: {self.cart.name})"
     
     def to_map(self) -> dict:
-        return {"name": self.name, "description": self.description, "cart": self.cart.name}
+        return {"name": self.name, "description": self.description, "cart": self.cart.name, "is_checked": self.is_checked}
 
 class JwtBlocklist(db.Model):
     __tablename__ = "jwt_blocklist"

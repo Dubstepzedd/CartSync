@@ -1,5 +1,5 @@
 import 'package:app/helper.dart';
-import 'package:app/pages/providers/cart_state.dart';
+import 'package:app/pages/providers/app_state.dart';
 import 'package:app/widget_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
@@ -88,7 +88,7 @@ class RegisterPageState extends State<RegisterPage> {
     if (formKey.currentState!.validate()) {
       final email = emailController.text;
       final password = passwordController.text;
-      context.read<CartState>().register(email, password).then((response) {
+      context.read<AppState>().register(email, password).then((response) {
         if (!context.mounted) {
           return;
         }

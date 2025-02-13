@@ -1,5 +1,5 @@
 import 'package:app/helper.dart';
-import 'package:app/pages/providers/cart_state.dart';
+import 'package:app/pages/providers/app_state.dart';
 import 'package:app/widget_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -48,7 +48,7 @@ class ListState extends State<ListPage> {
                     final name = nameController.text;
                     final description = descriptionController.text;
           
-                    context.read<CartState>().createCart(name, description).then((response) {
+                    context.read<AppState>().createCart(name, description).then((response) {
                     
                       if(!context.mounted) {
                         return;
@@ -64,8 +64,6 @@ class ListState extends State<ListPage> {
                   else {
                     displayMessage(context, false, "Please fill in all the fields");
                   }
-                    
-                  
                 },
                 style: ElevatedButton.styleFrom(
                   minimumSize: const Size(double.infinity, 50),

@@ -10,13 +10,13 @@ class Response {
   Response({required this.statusCode, required this.message});
 }
 
-class CartState extends ChangeNotifier {
+class AppState extends ChangeNotifier {
   List<User> _users = [];
   List<User> get users => _users; // directly expose the list
   List<Cart> _carts = [];
 
   List<Cart> get carts => _carts;
-
+  
   void clearUsers() {
     _users = [];
     notifyListeners();

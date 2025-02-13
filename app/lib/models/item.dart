@@ -3,8 +3,9 @@ class Item {
   final String name;
   final String description;
   final String cartName;
+  final bool isChecked;
 
-  Item({required this.id, required this.name, required this.description, required this.cartName});
+  Item({required this.id, required this.isChecked, required this.name, required this.description, required this.cartName});
 
   factory Item.fromJson(Map<String, dynamic> json) {
     return Item(
@@ -12,6 +13,7 @@ class Item {
       name: json['name'],
       description: json['description'],
       cartName: json['cart_id'],
+      isChecked: json['is_checked']
     );
   }
 

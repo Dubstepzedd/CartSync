@@ -1,4 +1,4 @@
-from app.models import Cart, User, JwtBlocklist
+from app.models import Cart, CartItem, User, JwtBlocklist
 from flask import Blueprint, jsonify, request
 from flask_jwt_extended import get_jwt_identity, jwt_required
 from flask_cors import cross_origin
@@ -131,3 +131,57 @@ def unfollow_user(username: str):
     db.session.commit()
 
     return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Successfully unfollowed user"}), 200
+
+
+@main_blueprint.route('/add_item', methods=['POST'])
+@jwt_required()
+@cross_origin()
+def add_item():
+    data = request.get_json()
+    cart_id = data["cart_id"]
+    name = data["item_name"]
+    description = data["item_description"]
+
+    cart = Cart.query.get(cart_id)
+
+    if cart is None:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "Cart not found"}), 404
+
+    item = CartItem(name=name, description=description, cart=cart, is_checked=False)
+    db.session.add(item)
+    db.session.commit()
+
+    return jsonify({"type": ResponseType.RESOURCE_CREATED.value, "msg": "Item added successfully", "data": item.to_map()}), 201
+
+
+
+@main_blueprint.route('/toggle_item', methods=['POST'])
+@jwt_required()
+@cross_origin()
+def toggle_item():
+    data = request.get_json()
+    item_id = data["item_id"]
+
+    item = CartItem.query.get(item_id)
+
+    if item is None:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "Item not found"}), 404
+
+    item.is_checked = not item.is_checked
+    db.session.commit()
+    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Item modified successfully", "data": item.to_map()}), 200
+
+
+@main_blueprint.route('/delete_item/<int:item_id>', methods=['DELETE'])
+@jwt_required()
+@cross_origin()
+def delete_item(item_id : int):
+    item = CartItem.query.get(item_id)
+
+    if item is None:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "Item not found"}), 404
+
+    db.session.delete(item)
+    db.session.commit()
+
+    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Item deleted successfully"}), 200

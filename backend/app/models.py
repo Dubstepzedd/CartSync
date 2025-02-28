@@ -86,7 +86,7 @@ class CartItem(db.Model):
         return f"Item {self.id}: {self.name}, (Cart: {self.cart.name})"
     
     def to_map(self) -> dict:
-        return {"name": self.name, "description": self.description, "cart": self.cart.name, "is_checked": self.is_checked}
+        return {"id": self.id, "name": self.name, "description": self.description, "cart": self.cart.name, "is_checked": self.is_checked, "cart_id": self.cart_id}
 
 class JwtBlocklist(db.Model):
     __tablename__ = "jwt_blocklist"

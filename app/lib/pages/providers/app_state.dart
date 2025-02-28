@@ -1,5 +1,6 @@
 import 'package:app/backend/server_communicator.dart';
 import 'package:app/models/cart.dart';
+import 'package:app/models/item.dart';
 import 'package:app/models/user.dart';
 import 'package:flutter/foundation.dart';
 
@@ -198,6 +199,64 @@ class AppState extends ChangeNotifier {
       }
     } catch (e) {
       return Response(statusCode: null, message: "Error occurred when removing friend");
+    }
+  }
+
+  Future<Response> addItem(Cart cart, String name, String description) async {
+    try {
+      final response = await ServerCommunicator()
+          .sendRequest("/add_item", HTTPMethod.post, {"cart_id": cart.id, "item_name": name, "item_description": description});
+      if (response["statusCode"] == 201) {
+        // This might not be needed later due to syncing with the server
+        final item = Item.fromJson(response["data"] as Map<String, dynamic>);
+        cart.items.add(item);
+        notifyListeners();
+        return Response(statusCode: 201, message: "Successfully added item");
+      } 
+      else {
+        return Response(statusCode: response["statusCode"], message: "Failed to add item");
+      }
+    }
+    catch (e) {
+      return Response(statusCode: null, message: "Error occurred when adding item");
+    }
+
+  }
+
+  Future<Response> toggleItem(Item item) async {
+    try {
+      final response = await ServerCommunicator().sendRequest("/toggle_item", HTTPMethod.post, {"item_id": item.id});
+      if (response["statusCode"] == 200) {
+        final newItem = response["data"];
+        item.isChecked = newItem["is_checked"];
+        notifyListeners();
+        return Response(statusCode: 200, message: "Successfully toggled item");
+      } 
+      else {
+        return Response(statusCode: response["statusCode"], message: "Failed to toggle item");
+      }
+    } catch (e) {
+      return Response(statusCode: null, message: "Error occurred when toggling item");
+    }
+  }
+
+  Future<Response> removeItem(Item item) async {
+    try {
+      final response = await ServerCommunicator().sendRequest("/delete_item", HTTPMethod.delete, {"item_id": item.id});
+      if (response["statusCode"] == 200) {
+        _carts = _carts.map((cart) {
+          cart.items.removeWhere((element) => element.id == item.id);
+          return cart;
+        }).toList();
+        
+        notifyListeners();
+        return Response(statusCode: 200, message: "Successfully toggled item");
+      } 
+      else {
+        return Response(statusCode: response["statusCode"], message: "Failed to toggle item");
+      }
+    } catch (e) {
+      return Response(statusCode: null, message: "Error occurred when toggling item");
     }
   }
 }

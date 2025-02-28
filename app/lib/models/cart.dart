@@ -10,6 +10,7 @@ class Cart {
   Cart({required this.items, required this.usernames, required this.id, required this.name, required this.description});
 
   factory Cart.fromJson(Map<String, dynamic> json) {
+    
     return Cart(
       items: (json['items'] as List<dynamic>).map((e) => Item.fromJson(e as Map<String, dynamic>)).toList(),
       usernames: (json['users'] as List<dynamic>).map((e) => e.toString()).toList(),

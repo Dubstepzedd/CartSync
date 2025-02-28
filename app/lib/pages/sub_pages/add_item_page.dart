@@ -1,7 +1,10 @@
+import 'package:app/helper.dart';
 import 'package:app/models/cart.dart';
+import 'package:app/pages/providers/app_state.dart';
 import 'package:app/widget_helper.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class AddItemPage extends StatefulWidget {
   final Cart cart;
@@ -26,8 +29,19 @@ class AddItemPageState extends State<AddItemPage> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      //TODO
-      context.pop();
+      context.read<AppState>().addItem(widget.cart, _nameController.text, _descriptionController.text).then((response) {
+          
+        if(!mounted) {
+          return;
+        }
+
+        displayMessage(context, response.statusCode == 201, response.message);
+
+        if(response.statusCode == 201) {
+          context.pop();
+        }
+
+      });
     }
   }
 
@@ -70,7 +84,7 @@ class AddItemPageState extends State<AddItemPage> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                 ),
-                child: Text('Create cart', style: TextStyle(fontSize: 16, color: Colors.grey[800]))
+                child: Text('Add item', style: TextStyle(fontSize: 16, color: Colors.grey[800]))
               ),
             ],
           ),

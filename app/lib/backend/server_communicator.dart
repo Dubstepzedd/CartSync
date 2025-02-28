@@ -13,8 +13,8 @@ enum HTTPMethod {
 // Singleton class for communicating with the server
 class ServerCommunicator {
   ServerCommunicator._privateConstructor();
-  //static const String baseUrl = "http://127.0.0.1:5000"; //10.0.2.2:5000 for android emulator
-  static const String baseUrl = "http://10.0.2.2:5000"; //for android emulator
+  static const String baseUrl = "http://127.0.0.1:5000"; //10.0.2.2:5000 for android emulator
+  //static const String baseUrl = "http://10.0.2.2:5000"; //for android emulator
   static final ServerCommunicator _instance = ServerCommunicator._privateConstructor();
   String? username;
 
@@ -124,7 +124,7 @@ class ServerCommunicator {
           return sendRequest(route, method, body); // Retry the original request
         } 
         else {
-          //TODO: Handle refresh token failure
+          //TODO: Handle refresh token failure here
           return {
             "statusCode": null,
             "msg": "Failed to refresh token. Please log in again.",

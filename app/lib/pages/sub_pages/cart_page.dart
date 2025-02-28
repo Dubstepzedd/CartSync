@@ -1,7 +1,10 @@
+import 'package:app/helper.dart';
 import 'package:app/models/cart.dart';
 import 'package:app/models/item.dart';
+import 'package:app/pages/providers/app_state.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:provider/provider.dart';
 
 class CartPage extends StatefulWidget {
   final Cart cart;
@@ -46,21 +49,51 @@ class CartPageState extends State<CartPage> {
         ),
       ),
       body: Center(
-        child: ListView.builder(
+        child: ListView.separated(
           itemCount: widget.cart.items.length,
           itemBuilder: (BuildContext context, int index) {
             Item item = widget.cart.items[index];
             return ListTile(
               tileColor: Colors.grey[200],
               title: Text(item.name),
-              trailing: IconButton(
-                icon: item.isChecked ? const Icon(Icons.radio_button_on) : const Icon(Icons.radio_button_on),
-                onPressed: () {
-                  print("Test!");
-                }
+              trailing: SizedBox(
+                width: 100,
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: item.isChecked ? const Icon(Icons.radio_button_on) : const Icon(Icons.radio_button_off),
+                      onPressed: () {
+                        context.read<AppState>().toggleItem(item).then((response) {
+                          if (!context.mounted) {
+                            return;
+                          }
+                    
+                          displayMessage(context, response.statusCode == 200, response.message);
+                    
+                        });
+                      }
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.delete),
+                      onPressed: () {
+                        context.read<AppState>().removeItem(item).then((response) {
+                          if (!context.mounted) {
+                            return;
+                          }
+                    
+                          displayMessage(context, response.statusCode == 200, response.message);
+                    
+                        });
+                      }
+                    )
+                  ],
+                ),
               ),
             );
-          }
+          }, 
+          separatorBuilder: (BuildContext context, int index) {
+            return const SizedBox(height: 5);
+          },
         )
       ),
     );

@@ -1,4 +1,4 @@
-// Reusable method to create a nice text field. 
+// Reusable method to create a nice text field.
 import 'package:flutter/material.dart';
 
 // TODO These validators are very simple, let the developer pass in a custom validator
@@ -6,7 +6,7 @@ import 'package:flutter/material.dart';
 Widget getTextFieldIcon(String label, IconData icon, TextEditingController controller, {bool isSensitive = false}) {
   return TextFormField(
     controller: controller,
-    obscureText: isSensitive,  
+    obscureText: isSensitive,
     validator: (value) {
       if (value == null || value.isEmpty) {
         return 'Please fill in this field';
@@ -15,7 +15,7 @@ Widget getTextFieldIcon(String label, IconData icon, TextEditingController contr
     },
     decoration: InputDecoration(
       hintText: label,
-      prefixIcon: Icon(icon), 
+      prefixIcon: Icon(icon),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(8),
         borderSide: const BorderSide(color: Colors.blue),

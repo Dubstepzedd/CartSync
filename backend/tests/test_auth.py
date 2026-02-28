@@ -33,7 +33,6 @@ def test_client():
         db.drop_all()
 
 @pytest.fixture
-
 def register_user(test_client):
     # Register a new user to use in other tests
     data = {
@@ -42,7 +41,7 @@ def register_user(test_client):
     }
     response = test_client.post("/register", json=data)
     assert response.status_code == 201
-    
+
 def test_register_new_user(test_client):
     data = {
         "username": "user",
@@ -58,7 +57,7 @@ def test_register_existing_user(test_client):
         "username": "user",  # This user is already registered in the fixture
         "password": "password123"
     }
-    
+
     response = test_client.post("/register", json=data)
     assert response.status_code == 409
     assert response.json["msg"] == "User already exists"
@@ -138,7 +137,7 @@ def test_token_expiration(test_client):
     assert response.json["msg"] == "Token has expired"
 
 
-# Test invalid input 
+# Test invalid input
 
 def test_invalid_payload_reg(test_client):
     data = {

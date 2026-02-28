@@ -7,9 +7,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class CartPage extends StatefulWidget {
-  final Cart cart;
+  final int id;
 
-  const CartPage({required this.cart, super.key});
+  const CartPage({required this.id, super.key});
 
   @override
   State<StatefulWidget> createState() {
@@ -21,6 +21,17 @@ class CartPageState extends State<CartPage> {
 
   @override
   Widget build(BuildContext context) {
+
+    final Cart? cart = context.select<AppState, Cart?>(
+      (state) => state.getCart(widget.id)
+    );
+
+    if (cart == null) {
+      return const Scaffold(
+        body: Center(child: Text("Cart not found")),
+      );
+    }
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -32,7 +43,7 @@ class CartPageState extends State<CartPage> {
               color: Colors.black,
             ),
             onPressed: () {
-              context.push('/add_item', extra: widget.cart);
+              context.push('/add_item', extra: widget.id);
             },
           )
         ],
@@ -50,9 +61,9 @@ class CartPageState extends State<CartPage> {
       ),
       body: Center(
         child: ListView.separated(
-          itemCount: widget.cart.items.length,
+          itemCount: cart.items.length,
           itemBuilder: (BuildContext context, int index) {
-            Item item = widget.cart.items[index];
+            Item item = cart.items[index];
             return ListTile(
               tileColor: Colors.grey[200],
               title: Text(item.name),
@@ -67,9 +78,7 @@ class CartPageState extends State<CartPage> {
                           if (!context.mounted) {
                             return;
                           }
-                    
                           displayMessage(context, response.statusCode == 200, response.message);
-                    
                         });
                       }
                     ),
@@ -80,9 +89,7 @@ class CartPageState extends State<CartPage> {
                           if (!context.mounted) {
                             return;
                           }
-                    
                           displayMessage(context, response.statusCode == 200, response.message);
-                    
                         });
                       }
                     )
@@ -90,7 +97,7 @@ class CartPageState extends State<CartPage> {
                 ),
               ),
             );
-          }, 
+          },
           separatorBuilder: (BuildContext context, int index) {
             return const SizedBox(height: 5);
           },

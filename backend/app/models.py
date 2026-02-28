@@ -1,9 +1,10 @@
 from datetime import datetime
+from typing import List
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import Boolean, String, Integer, DateTime, ForeignKey, Table
 from extensions import db, bcrypt
 
-# The models below use the updated syntax in SQLAlchemy 2.0. 
+# The models below use the updated syntax in SQLAlchemy 2.0.
 
 users_to_carts = Table(
     "association_table",
@@ -13,27 +14,53 @@ users_to_carts = Table(
 )
 
 users_to_users = Table(
-    "following",
+    "friends",
     db.Model.metadata,
     db.Column("user_id", db.String(50), db.ForeignKey("users.username"), primary_key=True),
-    db.Column("follow_id", db.String(50), db.ForeignKey("users.username"), primary_key=True)
+    db.Column("friend_id", db.String(50), db.ForeignKey("users.username"), primary_key=True)
 )
+
+class FriendRequest(db.Model):
+    __tablename__ = "friend_requests"
+
+    id: Mapped[int] = mapped_column(primary_key=True)
+    sender_id: Mapped[str] = mapped_column(String(50), ForeignKey("users.username"), nullable=False)
+    receiver_id: Mapped[str] = mapped_column(String(50), ForeignKey("users.username"), nullable=False)
+
+    # Relationships to access user objects if needed
+    sender: Mapped["User"] = relationship("User", foreign_keys=[sender_id], back_populates="sent_requests")
+    receiver: Mapped["User"] = relationship("User", foreign_keys=[receiver_id], back_populates="received_requests")
 
 class User(db.Model):
     __tablename__ = "users"
-    
+
     username: Mapped[str] = mapped_column(String(50), primary_key=True, nullable=False)
     password: Mapped[str] = mapped_column(String(60), nullable=False)
-    following: Mapped[list["User"]] = relationship(
+
+    friends: Mapped[List["User"]] = relationship(
         "User",
         secondary=users_to_users,
         primaryjoin=username == users_to_users.c.user_id,
-        secondaryjoin=username == users_to_users.c.follow_id,
+        secondaryjoin=username == users_to_users.c.friend_id,
         backref="friend_of",
         lazy=True
     )
 
-    carts: Mapped[list["Cart"]] = relationship("Cart", secondary=users_to_carts, back_populates="users", lazy=True)
+    carts: Mapped[List["Cart"]] = relationship("Cart", secondary=users_to_carts, back_populates="users", lazy=True)
+
+    sent_requests: Mapped[List["FriendRequest"]] = relationship(
+        "FriendRequest",
+        foreign_keys=[FriendRequest.sender_id],
+        back_populates="sender",
+        lazy=True
+    )
+
+    received_requests: Mapped[List["FriendRequest"]] = relationship(
+        "FriendRequest",
+        foreign_keys=[FriendRequest.receiver_id],
+        back_populates="receiver",
+        lazy=True
+    )
 
     def __init__(self, username: str, password: str):
         self.username = username
@@ -41,12 +68,18 @@ class User(db.Model):
 
     def check_password(self, password: str) -> bool:
         return bcrypt.check_password_hash(self.password, password)
-    
+
     def __repr__(self) -> str:
         return f"User {self.username}"
-    
+
     def to_map(self) -> dict:
-        return {"username": self.username, "carts": [cart.id for cart in self.carts], "following": [friend.username for friend in self.following]}
+        return {
+            "username": self.username,
+            "carts": [cart.id for cart in self.carts],
+            "friends": [friend.username for friend in self.friends],
+            "sent_friend_requests": [req.receiver_id for req in self.sent_requests],
+            "received_friend_requests": [req.sender_id for req in self.received_requests]
+        }
 
 class Cart(db.Model):
     __tablename__ = "carts"
@@ -59,16 +92,15 @@ class Cart(db.Model):
     def __init__(self, name: str, description: str):
         self.name = name
         self.description = description
-    
+
     def __repr__(self) -> str:
         return f"Cart {self.name}: {self.description}"
-    
+
     def to_map(self) -> dict:
         return {"id": self.id, "name": self.name, "description": self.description, "items": [item.to_map() for item in self.items], "users": [user.username for user in self.users]}
 
 class CartItem(db.Model):
     __tablename__ = "cart_items"
-    
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
@@ -76,7 +108,7 @@ class CartItem(db.Model):
     cart_id: Mapped[int] = mapped_column(Integer, ForeignKey("carts.id"), nullable=False)
     cart: Mapped["Cart"] = relationship("Cart", back_populates="items", lazy=True)
 
-    def __init__(self, name: str, description: str, cart: str, is_checked: bool = False):
+    def __init__(self, name: str, description: str, cart: "Cart", is_checked: bool = False):
         self.name = name
         self.description = description
         self.cart = cart
@@ -84,13 +116,13 @@ class CartItem(db.Model):
 
     def __repr__(self) -> str:
         return f"Item {self.id}: {self.name}, (Cart: {self.cart.name})"
-    
+
     def to_map(self) -> dict:
         return {"id": self.id, "name": self.name, "description": self.description, "cart": self.cart.name, "is_checked": self.is_checked, "cart_id": self.cart_id}
 
 class JwtBlocklist(db.Model):
     __tablename__ = "jwt_blocklist"
-    
+
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     jti: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     revoked_at: Mapped[datetime] = mapped_column(DateTime, nullable=False, default=datetime.now)

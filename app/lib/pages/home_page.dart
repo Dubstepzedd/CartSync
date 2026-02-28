@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
-  
+
   @override
   State<StatefulWidget> createState() {
     return HomePageState();
@@ -16,7 +16,7 @@ class HomePage extends StatefulWidget {
 
 class HomePageState extends State<HomePage> {
 
-  @override 
+  @override
   void initState() {
     super.initState();
     context.read<AppState>().fetchCarts();
@@ -24,22 +24,27 @@ class HomePageState extends State<HomePage> {
   @override
   Widget build(BuildContext context) {
 
-    final carts = context.select((AppState s) => s.carts);
+    final carts = context.watch<AppState>().carts; // Listen to all changes. Not the best but works.
+    if(carts.isEmpty) {
+      return const Center(
+        child: Text("You have no carts yet!")
+      );
+    }
+
     return Center(
-      child:
-        ListView.builder(
-          itemCount: carts.length,
-          itemBuilder: (BuildContext context, int index) {
-            Cart cart = carts[index];
-            return buildCard(context, cart);
-          }
-        )
+      child: ListView.builder(
+        itemCount: carts.length,
+        itemBuilder: (BuildContext context, int index) {
+          return buildCard(context, carts[index]);
+        },
+      ),
     );
   }
 
-  Widget buildCard(BuildContext context, Cart cart) { 
+  Widget buildCard(BuildContext context, Cart cart) {
+
     return GestureDetector(
-      onTap: () => context.push('/cart', extra: cart),
+      onTap: () => context.push('/cart', extra: cart.id),
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white10,

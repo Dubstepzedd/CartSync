@@ -1,5 +1,4 @@
 import 'package:app/helper.dart';
-import 'package:app/models/cart.dart';
 import 'package:app/pages/providers/app_state.dart';
 import 'package:app/widget_helper.dart';
 import 'package:flutter/material.dart';
@@ -7,9 +6,9 @@ import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 
 class AddItemPage extends StatefulWidget {
-  final Cart cart;
+  final int id;
 
-  const AddItemPage({super.key, required this.cart});
+  const AddItemPage({super.key, required this.id});
 
   @override
   AddItemPageState createState() => AddItemPageState();
@@ -29,8 +28,8 @@ class AddItemPageState extends State<AddItemPage> {
 
   void _submit() {
     if (_formKey.currentState!.validate()) {
-      context.read<AppState>().addItem(widget.cart, _nameController.text, _descriptionController.text).then((response) {
-          
+      context.read<AppState>().addItem(widget.id, _nameController.text, _descriptionController.text).then((response) {
+
         if(!mounted) {
           return;
         }

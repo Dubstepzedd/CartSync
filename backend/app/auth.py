@@ -32,12 +32,12 @@ def login():
 
     if not isinstance(username, str) or not isinstance(password, str) :
         return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Invalid payload"}), 400
-    
+
     user = User.query.filter_by(username=username).first()
-    
+
     if user is None:
         return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found"}), 404
-    
+
     if user.check_password(password):
         access_token = create_access_token(identity=username)
         refresh_token = create_refresh_token(identity=username)
@@ -45,7 +45,7 @@ def login():
     else:
         return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Invalid credentials"}), 400
 
-    
+
 @auth_blueprint.route("/register", methods=["POST"])
 @cross_origin()
 def register():
@@ -59,12 +59,12 @@ def register():
 
     if not isinstance(username, str) or not isinstance(password, str):
         return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Invalid payload"}), 400
-    
+
     user = User.query.filter_by(username=username).first()
-    
+
     if user is not None:
         return jsonify({"type": ResponseType.RESOURCE_ALREADY_EXISTS.value, "msg": "User already exists"}), 409
-    
+
     user = User(username, password)
     db.session.add(user)
     db.session.commit()
@@ -81,7 +81,7 @@ def logout():
     revoked_token = JwtBlocklist(jti=jti)
     db.session.add(revoked_token)
     db.session.commit()
-    
+
     return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Access token revoked"}), 200
 
 @auth_blueprint.route("/refresh", methods=["POST"])

@@ -2,5 +2,5 @@
 **/__pycache__/
 **/.pytest_cache/
 **/.coverage
-app.db
+dev.db
 .env

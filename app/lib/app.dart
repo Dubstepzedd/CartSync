@@ -1,8 +1,7 @@
 import 'package:app/auth/login_page.dart';
 import 'package:app/auth/register_page.dart';
 import 'package:app/main_scaffold.dart';
-import 'package:app/models/cart.dart';
-import 'package:app/pages/follow_page.dart';
+import 'package:app/pages/friend_page.dart';
 import 'package:app/pages/home_page.dart';
 import 'package:app/pages/list_page.dart';
 import 'package:app/pages/providers/app_state.dart';
@@ -37,18 +36,18 @@ final GoRouter _router = GoRouter(
     GoRoute(
       path: '/cart',
       pageBuilder: (context, state)  {
-        final cart = state.extra as Cart;
+        final id = state.extra as int;
         return NoTransitionPage(
-          child: CartPage(cart: cart)
+          child: CartPage(id: id)
         );
       }
     ),
     GoRoute(
       path: '/add_item',
       pageBuilder: (context, state)  {
-        final cart = state.extra as Cart;
+        final id = state.extra as int;
         return NoTransitionPage(
-          child: AddItemPage(cart: cart)
+          child: AddItemPage(id: id)
         );
       }
     ),

@@ -21,7 +21,7 @@ class ServerCommunicator {
   factory ServerCommunicator() {
     return _instance;
   }
-  
+
   void setUsername(String username) async {
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('username', username);

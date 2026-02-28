@@ -1,5 +1,4 @@
 import os
-import subprocess
 from flask import Flask
 from extensions import db, jwt,bcrypt
 from app.auth import auth_blueprint
@@ -12,12 +11,12 @@ def create_app():
     CORS(app, resources={r"/*"}, headers='Content-Type')
     config_name = os.getenv('FLASK_ENV', 'development')  # Default to 'development' if not set
     app.config.from_object(config_dict[config_name])  # Load the appropriate config
-    
+
     # Initialize extensions
     db.init_app(app)
     jwt.init_app(app)
     bcrypt.init_app(app)
-    
+
     # Register blueprints
     app.register_blueprint(main_blueprint)
     app.register_blueprint(auth_blueprint)

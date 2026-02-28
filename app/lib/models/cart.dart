@@ -10,13 +10,28 @@ class Cart {
   Cart({required this.items, required this.usernames, required this.id, required this.name, required this.description});
 
   factory Cart.fromJson(Map<String, dynamic> json) {
-    
+
     return Cart(
       items: (json['items'] as List<dynamic>).map((e) => Item.fromJson(e as Map<String, dynamic>)).toList(),
       usernames: (json['users'] as List<dynamic>).map((e) => e.toString()).toList(),
       id: json['id'],
       name: json['name'],
       description: json['description'],
+    );
+  }
+
+  Cart copyWith({
+    String? name,
+    List<String>? usernames,
+    List<Item>? items,
+    String? description
+  }) {
+    return Cart(
+      id: id,
+      usernames: usernames ?? this.usernames,
+      name: name ?? this.name,
+      items: items ?? this.items,
+      description: description ?? this.description,
     );
   }
 }

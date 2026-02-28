@@ -12,21 +12,39 @@ class Response {
 }
 
 class AppState extends ChangeNotifier {
-  List<User> _users = [];
-  List<User> get users => _users; // directly expose the list
+  List<User> _searchedUsers = [];
+  List<User> get users => _searchedUsers;
   List<Cart> _carts = [];
+  List<User> _friends = [];
+  List<User> get friends => _friends;
 
   List<Cart> get carts => _carts;
-  
+
   void clearUsers() {
-    _users = [];
+    _searchedUsers = [];
     notifyListeners();
   }
-  
-  // Fetch carts from the server
+
+  Future<Response> fetchFriends() async {
+    try {
+        final response = await ServerCommunicator().sendRequest("/user/friends", HTTPMethod.get, {});
+        final data = response["data"];
+        if (response["statusCode"] == 200) {
+          _friends = (data as List<dynamic>).map((e) => User.fromJson(e as Map<String, dynamic>)).toList();
+          notifyListeners();
+          return Response(statusCode: 200, message: "Successfully fetched friends");
+        }
+        else {
+          return Response(statusCode: response["statusCode"], message: "Failed to fetch friends");
+        }
+    }
+    catch(e) {
+        return Response(statusCode: null, message: "Error occurred when creating cart");
+    }
+  }
   Future<Response> fetchCarts() async {
     try {
-      final response = await ServerCommunicator().sendRequest("/get_carts", HTTPMethod.get, {});
+      final response = await ServerCommunicator().sendRequest("/carts", HTTPMethod.get, {});
       final cartData = response["data"];
       if (response["statusCode"] == 200) {
         _carts = (cartData as List<dynamic>).map((e) => Cart.fromJson(e as Map<String, dynamic>)).toList();
@@ -40,10 +58,9 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // Create a new cart
   Future<Response> createCart(String name, String description) async {
     try {
-      final response = await ServerCommunicator().sendRequest("/add_cart", HTTPMethod.post, {"name": name, "description": description});
+      final response = await ServerCommunicator().sendRequest("/cart/create", HTTPMethod.post, {"name": name, "description": description});
       if (response["statusCode"] == 201) {
         notifyListeners();
         return Response(statusCode: 201, message: "Successfully created cart");
@@ -55,10 +72,9 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // Remove user from cart
   Future<Response> removeUserFromCart(int cartId) async {
     try {
-      final response = await ServerCommunicator().sendRequest("/delete_user_from_cart", HTTPMethod.delete, {"cart_id": cartId});
+      final response = await ServerCommunicator().sendRequest("/cart/remove", HTTPMethod.delete, {"cart_id": cartId});
       if (response["statusCode"] == 200) {
         _carts = _carts.where((cart) => cart.id != cartId).toList();
         notifyListeners();
@@ -71,7 +87,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // User registration
   Future<Response> register(String email, String password) async {
     try {
       final response = await ServerCommunicator().sendRequest(
@@ -92,7 +107,6 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  // User login
   Future<Response> login(String email, String password) async {
     try {
       final response = await ServerCommunicator().sendRequest(
@@ -127,45 +141,53 @@ class AppState extends ChangeNotifier {
       else {
         return Response(statusCode: response["statusCode"], message: "Failed to log out");
       }
-    } 
+    }
     catch (e) {
       return Future.value(Response(statusCode: null, message: "Error occurred when logging out"));
     }
   }
 
-  // Search users by name
+  Cart? getCart(int id) {
+    try {
+      return carts.firstWhere((c) => c.id == id);
+    }
+    catch (e) {
+      return null;
+    }
+  }
+
   Future<void> searchUsers(String name) async {
     if (name.isEmpty) {
-      _users = [];
-      notifyListeners();  // Notify listeners when the user list is cleared
+      _searchedUsers = [];
+      notifyListeners();
       return;
     }
 
     try {
       final response = await ServerCommunicator()
-          .sendRequest("/search_user", HTTPMethod.post, {"username": name});
+          .sendRequest("/user/search", HTTPMethod.post, {"username": name});
 
       if (response["statusCode"] == 200) {
-        _users = (response["data"] as List<dynamic>)
+        _searchedUsers = (response["data"] as List<dynamic>)
             .map((e) => User.fromJson(e as Map<String, dynamic>))
             .toList();
         notifyListeners();
       }
     } catch (e) {
-      _users = [];
+      _searchedUsers = [];
       notifyListeners();
     }
   }
 
-  Future<Response> followUser(String email) async {
+  Future<Response> addFriend(final String email) async {
     try {
       final response = await ServerCommunicator()
-          .sendRequest("/follow_user", HTTPMethod.post, {"username": email});
+          .sendRequest("/user/befriend", HTTPMethod.post, {"username": email});
 
       if (response["statusCode"] == 201) {
-        _users = _users.map((user) {
+        _searchedUsers = _searchedUsers.map((user) {
           if (user.email == email) {
-            user.isFollowed = true;
+            user.friends.add(ServerCommunicator().username as String);
           }
           return user;
         }).toList();
@@ -179,21 +201,21 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<Response> unfollowUser(String email) async {
+  Future<Response> removeFriend(String email) async {
     try {
       final response = await ServerCommunicator()
-          .sendRequest("/unfollow_user", HTTPMethod.delete, {"username": email});
+          .sendRequest("/user/unfriend", HTTPMethod.post, {"username": email});
 
       if (response["statusCode"] == 200) {
-        _users = _users.map((user) {
+        _searchedUsers = _searchedUsers.map((user) {
           if (user.email == email) {
-            user.isFollowed = false;
+            user.friends.remove(ServerCommunicator().username as String);
           }
           return user;
         }).toList();
         notifyListeners();
         return Response(statusCode: 200, message: "Successfully unfollowed $email");
-      } 
+      }
       else {
         return Response(statusCode: response["statusCode"], message: "Failed to unfollow user");
       }
@@ -202,17 +224,34 @@ class AppState extends ChangeNotifier {
     }
   }
 
-  Future<Response> addItem(Cart cart, String name, String description) async {
+  Future<Response> addItem(int cartId, String name, String description) async {
     try {
       final response = await ServerCommunicator()
-          .sendRequest("/add_item", HTTPMethod.post, {"cart_id": cart.id, "item_name": name, "item_description": description});
+          .sendRequest("/cart/item/add", HTTPMethod.post, {"cart_id": cartId, "item_name": name, "item_description": description});
+
       if (response["statusCode"] == 201) {
-        // This might not be needed later due to syncing with the server
         final item = Item.fromJson(response["data"] as Map<String, dynamic>);
-        cart.items.add(item);
-        notifyListeners();
+
+        final cartIndex = _carts.indexWhere((c) => c.id == cartId);
+
+        if (cartIndex != -1) {
+          final oldCart = _carts[cartIndex];
+          final newItems = List<Item>.from(oldCart.items)..add(item);
+
+          final newCart = Cart(
+            id: oldCart.id,
+            name: oldCart.name,
+            description: oldCart.description,
+            usernames: oldCart.usernames,
+            items: newItems,
+          );
+
+          _carts[cartIndex] = newCart;
+          notifyListeners();
+        }
+
         return Response(statusCode: 201, message: "Successfully added item");
-      } 
+      }
       else {
         return Response(statusCode: response["statusCode"], message: "Failed to add item");
       }
@@ -220,18 +259,40 @@ class AppState extends ChangeNotifier {
     catch (e) {
       return Response(statusCode: null, message: "Error occurred when adding item");
     }
-
   }
 
   Future<Response> toggleItem(Item item) async {
     try {
-      final response = await ServerCommunicator().sendRequest("/toggle_item", HTTPMethod.post, {"item_id": item.id});
+      final response = await ServerCommunicator().sendRequest("/cart/item/toggle", HTTPMethod.post, {"item_id": item.id});
       if (response["statusCode"] == 200) {
-        final newItem = response["data"];
-        item.isChecked = newItem["is_checked"];
-        notifyListeners();
+        final newItemData = response["data"];
+
+        final cartIndex = _carts.indexWhere((c) => c.items.any((i) => i.id == item.id));
+
+        if (cartIndex != -1) {
+          final oldCart = _carts[cartIndex];
+
+          final newItems = oldCart.items.map((i) {
+            if (i.id == item.id) {
+              i.isChecked = newItemData["is_checked"];
+              return i;
+            }
+            return i;
+          }).toList();
+
+          final newCart = Cart(
+            id: oldCart.id,
+            name: oldCart.name,
+            description: oldCart.description,
+            usernames: oldCart.usernames,
+            items: newItems,
+          );
+
+          _carts[cartIndex] = newCart;
+          notifyListeners();
+        }
         return Response(statusCode: 200, message: "Successfully toggled item");
-      } 
+      }
       else {
         return Response(statusCode: response["statusCode"], message: "Failed to toggle item");
       }
@@ -242,16 +303,29 @@ class AppState extends ChangeNotifier {
 
   Future<Response> removeItem(Item item) async {
     try {
-      final response = await ServerCommunicator().sendRequest("/delete_item", HTTPMethod.delete, {"item_id": item.id});
+      final response = await ServerCommunicator().sendRequest("/cart/item/remove", HTTPMethod.delete, {"item_id": item.id});
       if (response["statusCode"] == 200) {
-        _carts = _carts.map((cart) {
-          cart.items.removeWhere((element) => element.id == item.id);
-          return cart;
-        }).toList();
-        
-        notifyListeners();
+
+        final cartIndex = _carts.indexWhere((c) => c.items.any((i) => i.id == item.id));
+
+        if (cartIndex != -1) {
+          final oldCart = _carts[cartIndex];
+          final newItems = oldCart.items.where((i) => i.id != item.id).toList();
+
+          final newCart = Cart(
+            id: oldCart.id,
+            name: oldCart.name,
+            description: oldCart.description,
+            usernames: oldCart.usernames,
+            items: newItems,
+          );
+
+          _carts[cartIndex] = newCart;
+          notifyListeners();
+        }
+
         return Response(statusCode: 200, message: "Successfully toggled item");
-      } 
+      }
       else {
         return Response(statusCode: response["statusCode"], message: "Failed to toggle item");
       }

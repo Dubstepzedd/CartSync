@@ -69,7 +69,7 @@ class MainScaffoldState extends State<MainScaffold> {
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.add), label: 'Add List'),
-          NavigationDestination(icon: Icon(Icons.people_alt), label: 'Find users'),
+          NavigationDestination(icon: Icon(Icons.people_alt), label: 'Add Friends'),
         ],
       ),
     );

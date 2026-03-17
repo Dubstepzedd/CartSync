@@ -48,14 +48,7 @@ class LoginPageState extends State<LoginPage> {
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () => onLogin(context),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),  
-                        backgroundColor: Colors.grey[300],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),  
-                        ),
-                      ),
-                      child: Text('Login', style: TextStyle(fontSize: 18, color: Colors.grey[800])),
+                      child: const Text('Login'),
                     ),
                     const SizedBox(height: 12),
                     const SizedBox(height: 20),

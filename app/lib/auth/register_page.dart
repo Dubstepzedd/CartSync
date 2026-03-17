@@ -63,14 +63,7 @@ class RegisterPageState extends State<RegisterPage> {
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () => onRegister(context),
-                      style: ElevatedButton.styleFrom(
-                        minimumSize: const Size(double.infinity, 50),  
-                        backgroundColor: Colors.grey[300],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(8),  
-                        ),
-                      ),
-                      child: Text('Register', style: TextStyle(fontSize: 18, color: Colors.grey[800])),
+                      child: const Text('Register'),
                     ),
                     const SizedBox(height: 12),
                     const SizedBox(height: 20),

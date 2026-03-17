@@ -37,17 +37,18 @@ def add_cart():
     except KeyError:
         return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Missing name"}), 400
 
-    cart = Cart(name=name, description=description)
-
-    user = User.query.filter_by(username=get_jwt_identity()).first()
+    username = get_jwt_identity()
+    user = User.query.filter_by(username=username).first()
     if user is None:
         return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "Logged in user not found"}), 404
 
+    cart = Cart(name=name, description=description, owner_id=username)
     cart.users.append(user)
     db.session.add(cart)
     db.session.commit()
 
     return jsonify({"type": ResponseType.RESOURCE_CREATED.value, "msg": "Cart added successfully"}), 201
+
 
 @main_blueprint.route('/cart/remove/<int:cart_id>', methods=['DELETE'])
 @jwt_required()
@@ -103,120 +104,190 @@ def get_friends():
     user: User = User.query.filter_by(username=get_jwt_identity()).first()
 
     if not user:
-        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "The JWT's mapped username does not correlate to a database entry."}), 400
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found."}), 404
 
-    return jsonify({"friends": [user.to_map() for user in user.friends]})
+    return jsonify({
+        "type": ResponseType.RESOURCE_FOUND.value,
+        "msg": "Friends found",
+        "data": [friend.to_map() for friend in user.friends]
+    }), 200
+
+
+@main_blueprint.route('/user/requests', methods=['GET'])
+@jwt_required()
+@cross_origin()
+def get_friend_requests():
+    user: User = User.query.filter_by(username=get_jwt_identity()).first()
+
+    if not user:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found."}), 404
+
+    return jsonify({
+        "type": ResponseType.RESOURCE_FOUND.value,
+        "msg": "Requests found",
+        "data": [req.sender.to_map() for req in user.received_requests]
+    }), 200
 
 @main_blueprint.route('/user/request', methods=['POST'])
 @jwt_required()
 @cross_origin()
-def send_request():
-    pass
-
-@main_blueprint.route('/user/accept', methods=['POST'])
-@jwt_required()
-@cross_origin()
-def accept_request():
-    pass
-
-@main_blueprint.route('/user/remove/request', methods=['DELETE'])
-@jwt_required()
-@cross_origin()
-def remove_request():
-    pass
-
-@main_blueprint.route('/user/remove/friend', methods=['DELETE'])
-@jwt_required()
-@cross_origin()
-def remove_friend():
-    pass
-
-"""
-@main_blueprint.route('/user/befriend', methods=['POST'])
-@jwt_required()
-@cross_origin()
-def befriend_user():
+def send_friend_request():
     data = request.get_json()
     target_username = data.get("username", None)
+    current_username = get_jwt_identity()
 
     if not target_username:
         return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Target username missing."}), 400
 
-    current_username = get_jwt_identity()
-
     if target_username == current_username:
-        return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "You cannot befriend yourself."}), 400
+        return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "You cannot send a friend request to yourself."}), 400
 
-    target_user = User.query.filter_by(username=target_username).first()
-    current_user = User.query.filter_by(username=current_username).first()
+    current_user: User = User.query.filter_by(username=current_username).first()
+    target_user: User = User.query.filter_by(username=target_username).first()
 
     if not target_user or not current_user:
-        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found"}), 404
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found."}), 404
 
     if target_user in current_user.friends:
         return jsonify({"type": ResponseType.RESOURCE_ALREADY_EXISTS.value, "msg": "You are already friends."}), 409
 
-    incoming_req = FriendRequest.query.filter_by(
-        sender_id=target_username,
-        receiver_id=current_username
-    ).first()
-
-    if incoming_req:
-        current_user.friends.append(target_user)
-        target_user.friends.append(current_user) # Ensure bidirectional friendship
-        db.session.delete(incoming_req) # Remove the pending request
-        db.session.commit()
-        return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Friend request accepted!"}), 200
-
-    outgoing_req = FriendRequest.query.filter_by(
+    existing_req = FriendRequest.query.filter_by(
         sender_id=current_username,
         receiver_id=target_username
     ).first()
 
-    if outgoing_req:
-        return jsonify({"type": ResponseType.RESOURCE_ALREADY_EXISTS.value, "msg": "Friend request already pending."}), 409
+    if existing_req:
+        return jsonify({"type": ResponseType.RESOURCE_ALREADY_EXISTS.value, "msg": "Friend request already sent."}), 409
 
     new_request = FriendRequest(sender=current_user, receiver=target_user)
     db.session.add(new_request)
     db.session.commit()
 
-    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Friend request sent."}), 201
+    return jsonify({"type": ResponseType.RESOURCE_CREATED.value, "msg": "Friend request sent."}), 201
 
-@main_blueprint.route('/user/unfriend', methods=['POST'])
+
+@main_blueprint.route('/user/accept', methods=['POST'])
 @jwt_required()
 @cross_origin()
-def unfriend_user():
+def accept_friend_request():
     data = request.get_json()
-    target_username = data.get("username", None)
-    current_user: User = User.query.filter_by(username=get_jwt_identity()).first()
-    target_user: User = User.query.filter_by(username=target_username).first()
+    sender_username = data.get("username", None)
+    current_username = get_jwt_identity()
 
-    if not target_user or not current_user:
-        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found"}), 404
+    if not sender_username:
+        return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "Sender username missing."}), 400
 
-    if target_user in current_user.friends:
-        current_user.friends.remove(target_user)
-        # Ensure mutual removal
-        if current_user in target_user.friends:
-            target_user.friends.remove(current_user)
+    current_user: User = User.query.filter_by(username=current_username).first()
+    sender_user: User = User.query.filter_by(username=sender_username).first()
 
-        db.session.commit()
-        return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Unfriended user."}), 200
+    if not current_user or not sender_user:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found."}), 404
 
-    out_req = FriendRequest.query.filter_by(sender_id=current_user.username, receiver_id=target_username).first()
+    incoming_req = FriendRequest.query.filter_by(
+        sender_id=sender_username,
+        receiver_id=current_username
+    ).first()
+
+    if not incoming_req:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "No incoming friend request from this user."}), 404
+
+    current_user.friends.append(sender_user)
+    sender_user.friends.append(current_user)
+    db.session.delete(incoming_req)
+    db.session.commit()
+
+    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Friend request accepted."}), 200
+
+
+@main_blueprint.route('/user/remove/request/<string:target_username>', methods=['DELETE'])
+@jwt_required()
+@cross_origin()
+def remove_friend_request(target_username: str):
+    current_username = get_jwt_identity()
+
+    # Cancel an outgoing request
+    out_req = FriendRequest.query.filter_by(
+        sender_id=current_username,
+        receiver_id=target_username
+    ).first()
+
     if out_req:
         db.session.delete(out_req)
         db.session.commit()
         return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Friend request canceled."}), 200
 
-    in_req = FriendRequest.query.filter_by(sender_id=target_username, receiver_id=current_user.username).first()
+    # Decline an incoming request
+    in_req = FriendRequest.query.filter_by(
+        sender_id=target_username,
+        receiver_id=current_username
+    ).first()
+
     if in_req:
         db.session.delete(in_req)
         db.session.commit()
         return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Friend request declined."}), 200
 
-    return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "No relationship found to remove."}), 400
-"""
+    return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "No pending request found with this user."}), 404
+
+
+@main_blueprint.route('/user/remove/friend/<string:target_username>', methods=['DELETE'])
+@jwt_required()
+@cross_origin()
+def remove_friend(target_username: str):
+    current_username = get_jwt_identity()
+    current_user: User = User.query.filter_by(username=current_username).first()
+    target_user: User = User.query.filter_by(username=target_username).first()
+
+    if not current_user or not target_user:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found."}), 404
+
+    if target_user not in current_user.friends:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "You are not friends with this user."}), 404
+
+    current_user.friends.remove(target_user)
+    if current_user in target_user.friends:
+        target_user.friends.remove(current_user)
+    db.session.commit()
+
+    return jsonify({"type": ResponseType.SUCCESS.value, "msg": "Friend removed."}), 200
+
+@main_blueprint.route('/cart/share', methods=['POST'])
+@jwt_required()
+@cross_origin()
+def share_cart():
+    data = request.get_json()
+    cart_id = data.get("cart_id")
+    target_username = data.get("username")
+
+    if not cart_id or not target_username:
+        return jsonify({"type": ResponseType.WRONG_PAYLOAD.value, "msg": "cart_id and username are required."}), 400
+
+    current_username = get_jwt_identity()
+    current_user: User = User.query.filter_by(username=current_username).first()
+    target_user: User = User.query.filter_by(username=target_username).first()
+
+    if not current_user or not target_user:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "User not found."}), 404
+
+    if target_user not in current_user.friends:
+        return jsonify({"type": ResponseType.UNAUTHORIZED.value, "msg": "You can only share carts with friends."}), 403
+
+    cart: Cart = Cart.query.get(cart_id)
+
+    if not cart:
+        return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "Cart not found."}), 404
+
+    if cart.owner_id != current_username:
+        return jsonify({"type": ResponseType.UNAUTHORIZED.value, "msg": "Only the cart owner can share it."}), 403
+
+    if target_user in cart.users:
+        return jsonify({"type": ResponseType.RESOURCE_ALREADY_EXISTS.value, "msg": "User is already in this cart."}), 409
+
+    cart.users.append(target_user)
+    db.session.commit()
+
+    return jsonify({"type": ResponseType.SUCCESS.value, "msg": f"Cart shared with {target_username}."}), 200
+
 
 @main_blueprint.route('/cart/item/add', methods=['POST'])
 @jwt_required()
@@ -225,20 +296,17 @@ def add_item():
     data = request.get_json()
     cart_id = data["cart_id"]
     name = data["item_name"]
-    description = data["item_description"]
 
     cart = Cart.query.get(cart_id)
 
     if cart is None:
         return jsonify({"type": ResponseType.RESOURCE_NOT_FOUND.value, "msg": "Cart not found"}), 404
 
-    item = CartItem(name=name, description=description, cart=cart, is_checked=False)
+    item = CartItem(name=name, cart=cart)
     db.session.add(item)
     db.session.commit()
 
     return jsonify({"type": ResponseType.RESOURCE_CREATED.value, "msg": "Item added successfully", "data": item.to_map()}), 201
-
-
 
 @main_blueprint.route('/cart/item/toggle', methods=['POST'])
 @jwt_required()

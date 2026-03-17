@@ -64,8 +64,6 @@ class MainScaffoldState extends State<MainScaffold> {
           });
         },
         selectedIndex: selectedIndex,
-        backgroundColor: Colors.white,
-        indicatorColor: Colors.amber,
         destinations: const [
           NavigationDestination(icon: Icon(Icons.home), label: 'Home'),
           NavigationDestination(icon: Icon(Icons.add), label: 'Add List'),

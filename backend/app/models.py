@@ -86,31 +86,31 @@ class Cart(db.Model):
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
     description: Mapped[str] = mapped_column(String(255), nullable=False)
+    owner_id: Mapped[str] = mapped_column(String(50), ForeignKey("users.username"), nullable=False)
     items: Mapped[list["CartItem"]] = relationship("CartItem", back_populates="cart", lazy=True, cascade="all, delete-orphan")
     users: Mapped[list["User"]] = relationship("User", secondary=users_to_carts, back_populates="carts", lazy=True)
 
-    def __init__(self, name: str, description: str):
+    def __init__(self, name: str, description: str, owner_id: str):
         self.name = name
         self.description = description
+        self.owner_id = owner_id
 
     def __repr__(self) -> str:
         return f"Cart {self.name}: {self.description}"
 
     def to_map(self) -> dict:
-        return {"id": self.id, "name": self.name, "description": self.description, "items": [item.to_map() for item in self.items], "users": [user.username for user in self.users]}
+        return {"id": self.id, "name": self.name, "description": self.description, "owner": self.owner_id, "items": [item.to_map() for item in self.items], "users": [user.username for user in self.users]}
 
 class CartItem(db.Model):
     __tablename__ = "cart_items"
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
     name: Mapped[str] = mapped_column(String(50), nullable=False)
-    description: Mapped[str] = mapped_column(String(255), nullable=False)
     is_checked: Mapped[bool] = mapped_column(Boolean, default=False)
     cart_id: Mapped[int] = mapped_column(Integer, ForeignKey("carts.id"), nullable=False)
     cart: Mapped["Cart"] = relationship("Cart", back_populates="items", lazy=True)
 
-    def __init__(self, name: str, description: str, cart: "Cart", is_checked: bool = False):
+    def __init__(self, name: str, cart: "Cart", is_checked: bool = False):
         self.name = name
-        self.description = description
         self.cart = cart
         self.is_checked = is_checked
 
@@ -118,7 +118,7 @@ class CartItem(db.Model):
         return f"Item {self.id}: {self.name}, (Cart: {self.cart.name})"
 
     def to_map(self) -> dict:
-        return {"id": self.id, "name": self.name, "description": self.description, "cart": self.cart.name, "is_checked": self.is_checked, "cart_id": self.cart_id}
+        return {"id": self.id, "name": self.name, "cart": self.cart.name, "is_checked": self.is_checked, "cart_id": self.cart_id}
 
 class JwtBlocklist(db.Model):
     __tablename__ = "jwt_blocklist"

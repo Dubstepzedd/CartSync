@@ -30,10 +30,10 @@ class User {
       return FriendshipStatus.active;
     }
     if (sentRequests.contains(targetUsername)) {
-      return FriendshipStatus.requestSent;
+      return FriendshipStatus.requestReceived;
     }
     if (receivedRequests.contains(targetUsername)) {
-      return FriendshipStatus.requestReceived;
+      return FriendshipStatus.requestSent;
     }
     return FriendshipStatus.none;
   }

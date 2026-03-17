@@ -20,11 +20,10 @@ class UserState extends State<FollowPage> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (context.read<AppState>().users.isEmpty) {
-        return;
-      }
-
-      context.read<AppState>().clearUsers();
+      final state = context.read<AppState>();
+      state.fetchFriends();
+      state.fetchFriendRequests();
+      if (state.users.isNotEmpty) state.clearUsers();
     });
   }
 
@@ -32,107 +31,167 @@ class UserState extends State<FollowPage> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(textAlign: TextAlign.left, "Incoming Friend Requests"),
-            const SizedBox(height: 20),
-            Consumer<AppState>(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SectionHeader("Incoming Requests", icon: Icons.mail_outline),
+          const SizedBox(height: 12),
+          Consumer<AppState>(
+            builder: (context, cartState, child) {
+              final requests = cartState.incomingRequests;
+              if (requests.isEmpty) {
+                return Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Text(
+                    "No pending requests",
+                    style: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                  ),
+                );
+              }
+              return ListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: requests.length,
+                itemBuilder: (BuildContext context, int index) {
+                  return UserTile(user: requests[index], isIncomingRequest: true);
+                },
+              );
+            },
+          ),
+          const SizedBox(height: 24),
+          const _SectionHeader("Find Users", icon: Icons.people_outline),
+          const SizedBox(height: 12),
+          TextFormField(
+            onChanged: (value) => context.read<AppState>().searchUsers(value),
+            decoration: const InputDecoration(
+              hintText: "Search by username",
+              prefixIcon: Icon(Icons.search),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Expanded(
+            child: Consumer<AppState>(
               builder: (context, cartState, child) {
-                final users = cartState.friends;
+                final users = cartState.users;
+                if (users.isEmpty) return const SizedBox.shrink();
                 return ListView.builder(
-                  shrinkWrap: true,
                   itemCount: users.length,
                   itemBuilder: (BuildContext context, int index) {
-                    final user = users[index];
-                    return UserTile(user: user, isActionable: false);
+                    return UserTile(user: users[index]);
                   },
                 );
               },
             ),
-            const SizedBox(height: 20),
-            const Text(textAlign: TextAlign.left, "Add New Friends"),
-            const SizedBox(height: 20),
-            TextFormField(
-              onChanged: (value) {
-                context.read<AppState>().searchUsers(value);
-              },
-              decoration: InputDecoration(
-                hintText: "Search for users",
-                prefixIcon: const Icon(Icons.search),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Colors.blue),
-                ),
-                focusedBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(8),
-                  borderSide: const BorderSide(color: Colors.blueAccent),
-                ),
-              ),
-            ),
-            const SizedBox(height: 20),
-            Expanded(
-              child: Consumer<AppState>(
-                builder: (context, cartState, child) {
-                  final users = cartState.users;
-                  return ListView.builder(
-                    shrinkWrap: true,
-                    itemCount: users.length,
-                    itemBuilder: (BuildContext context, int index) {
-                      final user = users[index];
-                      return UserTile(user: user);
-                    },
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
 }
 
 
-class UserTile extends StatelessWidget {
-  final User user;
-  final bool isActionable;
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final IconData icon;
 
-  const UserTile({super.key, required this.user, this.isActionable = true});
+  const _SectionHeader(this.title, {required this.icon});
 
   @override
   Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.black54),
+        const SizedBox(width: 8),
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+      ],
+    );
+  }
+}
 
+class UserTile extends StatelessWidget {
+  final User user;
+  final bool isActionable;
+  final bool isIncomingRequest;
+
+  const UserTile({
+    super.key,
+    required this.user,
+    this.isActionable = true,
+    this.isIncomingRequest = false,
+  });
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
-        color: Colors.white10,
-        border: Border.all(color: Colors.grey.shade300),
+        color: Colors.white,
+        border: Border.all(color: Colors.grey.shade200),
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.shade200,
-            blurRadius: 6,
-            offset: const Offset(0, 4),
+            color: Colors.grey.shade100,
+            blurRadius: 4,
+            offset: const Offset(0, 2),
           ),
         ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            user.email,
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        leading: CircleAvatar(
+          backgroundColor: Colors.blueAccent.withValues(alpha: 0.12),
+          child: Text(
+            user.email[0].toUpperCase(),
             style: const TextStyle(
-              fontSize: 16,
+              color: Colors.blueAccent,
               fontWeight: FontWeight.bold,
-              color: Colors.black87,
             ),
           ),
-          isActionable ? buildFriendActionButton(context, user) : const SizedBox()
-        ],
+        ),
+        title: Text(
+          user.email,
+          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
+        ),
+        trailing: isIncomingRequest
+            ? buildIncomingRequestButtons(context, user)
+            : isActionable
+                ? buildFriendActionButton(context, user)
+                : null,
       ),
+    );
+  }
+
+  Widget buildIncomingRequestButtons(BuildContext context, User target) {
+    final appState = context.read<AppState>();
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        IconButton(
+          icon: const Icon(Icons.check_circle_outline, color: Colors.green),
+          tooltip: "Accept",
+          onPressed: () async {
+            final response = await appState.acceptFriendRequest(target.email);
+            if (!context.mounted) return;
+            displayMessage(context, response.statusCode == 200, response.message);
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.cancel_outlined, color: Colors.red),
+          tooltip: "Decline",
+          onPressed: () async {
+            final response = await appState.removeFriendRequest(target.email);
+            if (!context.mounted) return;
+            displayMessage(context, response.statusCode == 200, response.message);
+          },
+        ),
+      ],
     );
   }
 
@@ -155,20 +214,19 @@ class UserTile extends StatelessWidget {
       case FriendshipStatus.requestSent:
         icon = Icons.cancel_outlined;
         color = Colors.grey;
-        action = () async => await appState.removeFriend(target.email);
+        action = () async => await appState.removeFriendRequest(target.email);
         break;
 
       case FriendshipStatus.requestReceived:
         icon = Icons.check_circle_outline;
         color = Colors.green;
-        action = () async => await appState.addFriend(target.email);
+        action = () async => await appState.acceptFriendRequest(target.email);
         break;
 
       case FriendshipStatus.none:
-      default:
         icon = Icons.group_add;
         color = Colors.blue;
-        action = () async => await appState.addFriend(target.email);
+        action = () async => await appState.sendFriendRequest(target.email);
         break;
     }
 
@@ -178,8 +236,7 @@ class UserTile extends StatelessWidget {
       onPressed: () async {
         final response = await action();
         if (!context.mounted) return;
-
-        displayMessage(context, response.statusCode == 201 || response.statusCode == 200, response.message);
+        displayMessage(context, response.statusCode == 200 || response.statusCode == 201, response.message);
       },
     );
   }

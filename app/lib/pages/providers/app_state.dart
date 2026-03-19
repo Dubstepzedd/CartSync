@@ -81,8 +81,8 @@ class AppState extends ChangeNotifier {
 
   Future<Response> fetchCarts() async {
     try {
-      final response = await ServerCommunicator()
-          .sendRequest("/carts", HTTPMethod.get, {});
+      final response =
+          await ServerCommunicator().sendRequest("/carts", HTTPMethod.get, {});
       if (response["statusCode"] == 200) {
         _carts = (response["data"] as List<dynamic>)
             .map((e) => Cart.fromJson(e as Map<String, dynamic>))
@@ -188,9 +188,10 @@ class AppState extends ChangeNotifier {
         {"username": email.trim(), "password": password.trim()},
       );
       if (response["statusCode"] == 200) {
+        Map<String, dynamic> data = response["data"];
         ServerCommunicator().setUsername(email);
         ServerCommunicator()
-            .setToken(response["access_token"], response["refresh_token"]);
+            .setToken(data["access_token"], data["refresh_token"]);
         return Response(
           statusCode: 200,
           message: "Successfully logged in",
@@ -202,7 +203,7 @@ class AppState extends ChangeNotifier {
       );
     } catch (e) {
       return Response(
-        statusCode: null,
+        statusCode: 500,
         message: "Error occurred when logging in",
       );
     }
@@ -409,7 +410,8 @@ class AppState extends ChangeNotifier {
         final cartIndex = _carts.indexWhere((c) => c.id == cartId);
         if (cartIndex != -1) {
           final old = _carts[cartIndex];
-          _carts[cartIndex] = old.copyWith(usernames: [...old.usernames, username]);
+          _carts[cartIndex] =
+              old.copyWith(usernames: [...old.usernames, username]);
         }
         notifyListeners();
         return Response(

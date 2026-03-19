@@ -3,15 +3,20 @@ name = "cartsync-backend"
 version = "0.1.0"
 requires-python = ">=3.12"
 dependencies = [
-    "flask",
-    "flask-bcrypt",
-    "flask-cors",
-    "flask-jwt-extended",
-    "flask-sqlalchemy",
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy[asyncio]",
+    "aiosqlite",
+    "python-jose[cryptography]",
+    "argon2-cffi",
     "python-dotenv",
+    "redis[asyncio]",
+    "sse-starlette",
 ]
 
 [dependency-groups]
 dev = [
     "pytest",
+    "pytest-asyncio",
+    "httpx",
 ]

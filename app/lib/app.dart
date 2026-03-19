@@ -1,5 +1,5 @@
-import 'package:app/auth/login_page.dart';
-import 'package:app/auth/register_page.dart';
+import 'package:app/pages/auth/login_page.dart';
+import 'package:app/pages/auth/register_page.dart';
 import 'package:app/main_scaffold.dart';
 import 'package:app/pages/friend_page.dart';
 import 'package:app/pages/home_page.dart';

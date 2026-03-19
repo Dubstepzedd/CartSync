@@ -20,12 +20,12 @@ class LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,  // Soft background color
+      backgroundColor: Colors.white, // Soft background color
       body: Center(
         child: Padding(
-          padding: const EdgeInsets.all(20.0),  // Add padding around the form
+          padding: const EdgeInsets.all(20.0), // Add padding around the form
           child: SizedBox(
-            width: 350,  // Increased width for better spacing
+            width: 350, // Increased width for better spacing
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Form(
@@ -38,13 +38,17 @@ class LoginPageState extends State<LoginPage> {
                       style: TextStyle(
                         fontSize: 32,
                         fontWeight: FontWeight.bold,
-                        color: Colors.blueAccent, 
+                        color: Colors.blueAccent,
                       ),
                     ),
                     const SizedBox(height: 20),
-                    getTextFieldIcon('Email', Icons.email, emailController),  
+                    getTextFieldIcon('Email', Icons.email, emailController),
                     const SizedBox(height: 16),
-                    getTextFieldIcon('Password', Icons.lock, isSensitive: true, passwordController), 
+                    getTextFieldIcon(
+                        'Password',
+                        Icons.lock,
+                        isSensitive: true,
+                        passwordController),
                     const SizedBox(height: 20),
                     ElevatedButton(
                       onPressed: () => onLogin(context),
@@ -80,8 +84,10 @@ class LoginPageState extends State<LoginPage> {
   Future<void> onLogin(BuildContext context) async {
     // Validate form before proceeding
     if (formKey.currentState!.validate()) {
-
-      context.read<AppState>().login(emailController.text, passwordController.text).then((response) {
+      context
+          .read<AppState>()
+          .login(emailController.text, passwordController.text)
+          .then((response) {
         if (!context.mounted) {
           return;
         }
@@ -94,5 +100,4 @@ class LoginPageState extends State<LoginPage> {
       });
     }
   }
-
 }

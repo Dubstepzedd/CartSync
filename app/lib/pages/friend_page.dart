@@ -14,8 +14,8 @@ class FollowPage extends StatefulWidget {
     return UserState();
   }
 }
-class UserState extends State<FollowPage> {
 
+class UserState extends State<FollowPage> {
   @override
   void initState() {
     super.initState();
@@ -53,7 +53,8 @@ class UserState extends State<FollowPage> {
                 physics: const NeverScrollableScrollPhysics(),
                 itemCount: requests.length,
                 itemBuilder: (BuildContext context, int index) {
-                  return UserTile(user: requests[index], isIncomingRequest: true);
+                  return UserTile(
+                      user: requests[index], isIncomingRequest: true);
                 },
               );
             },
@@ -88,7 +89,6 @@ class UserState extends State<FollowPage> {
     );
   }
 }
-
 
 class _SectionHeader extends StatelessWidget {
   final String title;
@@ -157,7 +157,8 @@ class UserTile extends StatelessWidget {
         ),
         title: Text(
           user.email,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
+          style: const TextStyle(
+              fontSize: 15, fontWeight: FontWeight.w600, color: Colors.black87),
         ),
         trailing: isIncomingRequest
             ? buildIncomingRequestButtons(context, user)
@@ -179,7 +180,8 @@ class UserTile extends StatelessWidget {
           onPressed: () async {
             final response = await appState.acceptFriendRequest(target.email);
             if (!context.mounted) return;
-            displayMessage(context, response.statusCode == 200, response.message);
+            displayMessage(
+                context, response.statusCode == 200, response.message);
           },
         ),
         IconButton(
@@ -188,7 +190,8 @@ class UserTile extends StatelessWidget {
           onPressed: () async {
             final response = await appState.removeFriendRequest(target.email);
             if (!context.mounted) return;
-            displayMessage(context, response.statusCode == 200, response.message);
+            displayMessage(
+                context, response.statusCode == 200, response.message);
           },
         ),
       ],
@@ -236,7 +239,10 @@ class UserTile extends StatelessWidget {
       onPressed: () async {
         final response = await action();
         if (!context.mounted) return;
-        displayMessage(context, response.statusCode == 200 || response.statusCode == 201, response.message);
+        displayMessage(
+            context,
+            response.statusCode == 200 || response.statusCode == 201,
+            response.message);
       },
     );
   }

@@ -26,7 +26,7 @@ config_dict = {
 }
 
 
-def get_config():
+def get_config() -> BaseConfig:
     config_name = os.getenv("FASTAPI_ENV")
     if not config_name:
         raise RuntimeError("'FASTAPI_ENV' is not set. Please add it to the environment.")

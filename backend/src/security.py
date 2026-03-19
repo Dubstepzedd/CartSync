@@ -3,7 +3,7 @@ from uuid import uuid4
 
 from fastapi import Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models import User
@@ -40,9 +40,9 @@ async def get_token_payload(
         )
         if payload.get("type") != "access":
             raise HTTPException(status_code=401, detail="Could not validate credentials")
-    except JWTError as e:
-        if "expired" in str(e).lower():
-            raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.ExpiredSignatureError:
+        raise HTTPException(status_code=401, detail="Token has expired")
+    except jwt.InvalidTokenError:
         raise HTTPException(status_code=401, detail="Could not validate credentials")
 
     jti = payload.get("jti")

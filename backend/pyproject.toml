@@ -7,7 +7,7 @@ dependencies = [
     "uvicorn[standard]",
     "sqlalchemy[asyncio]",
     "aiosqlite",
-    "python-jose[cryptography]",
+    "PyJWT",
     "argon2-cffi",
     "python-dotenv",
     "redis[asyncio]",

@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.security import HTTPAuthorizationCredentials
-from jose import JWTError, jwt
+import jwt
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models import User, JwtBlocklist
@@ -99,7 +99,7 @@ async def refresh(
         if payload.get("type") != "refresh":
             return make_response(ResponseType.UNAUTHORIZED, "Not a refresh token", 401)
         username = payload.get("sub")
-    except JWTError:
+    except jwt.InvalidTokenError:
         return make_response(ResponseType.UNAUTHORIZED, "Invalid token", 401)
 
     new_access_token = create_access_token(username)
